@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "label": "Key-Value Stores",
+  "questions": [
+    {
+      "id": "kv-001",
+      "topic": "key-value",
+      "difficulty": 1,
+      "prompt": "Welche Aussagen charakterisieren Key-Value Stores typischerweise korrekt?",
+      "options": [
+        {"id":"a","text":"Werte werden über Schlüssel adressiert.","correct":true,"explanation":"Das ist das grundlegende Zugriffsmodell."},
+        {"id":"b","text":"Die innere Semantik des Werts ist typischerweise nur der Anwendung bekannt.","correct":true,"explanation":"Der Store behandelt Werte weitgehend als Bytefolgen."},
+        {"id":"c","text":"Komplexe Ad-hoc-Joins gehören zum typischen Kernzugriff.","correct":false,"explanation":"Meist dominieren Point Lookups per Key."},
+        {"id":"d","text":"Viele Systeme sind für hohe Write-Raten und Skalierbarkeit optimiert.","correct":true,"explanation":"Das sind zentrale Ziele dieser Kategorie."}
+      ],
+      "explanation": "Key-Value Stores reduzieren das Abfragemodell zugunsten von Geschwindigkeit und Skalierbarkeit.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 4–6"},
+      "tags": ["Grundlagen","Use Cases"]
+    },
+    {
+      "id": "kv-002",
+      "topic": "key-value",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über Bitcasks Dateiorganisation sind korrekt?",
+      "options": [
+        {"id":"a","text":"Zu einem Zeitpunkt ist genau eine Datendatei aktiv und beschreibbar.","correct":true,"explanation":"Alle neuen Einträge werden dort angehängt."},
+        {"id":"b","text":"Geschlossene Dateien werden bei Updates an der passenden Stelle überschrieben.","correct":false,"explanation":"Geschlossene Dateien sind immutable."},
+        {"id":"c","text":"Ein Delete wird durch einen angehängten Tombstone dargestellt.","correct":true,"explanation":"Auch Löschungen sind append-only."},
+        {"id":"d","text":"Ein Update erzeugt eine neue Version des Eintrags.","correct":true,"explanation":"Die ältere Version bleibt bis zum Merge physisch vorhanden."}
+      ],
+      "explanation": "Bitcask führt alle Änderungen als sequentielle Anhänge aus.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 10–12"},
+      "tags": ["Bitcask","Dateien"]
+    },
+    {
+      "id": "kv-003",
+      "topic": "key-value",
+      "difficulty": 2,
+      "prompt": "Welche Informationen speichert Bitcasks Keydir für jeden lebenden Schlüssel?",
+      "options": [
+        {"id":"a","text":"file_id","correct":true,"explanation":"Bestimmt die Datendatei."},
+        {"id":"b","text":"Offset und Value-Größe","correct":true,"explanation":"Ermöglichen den gezielten Disk-Read."},
+        {"id":"c","text":"Den vollständigen Value selbst","correct":false,"explanation":"Der Value bleibt in der Datendatei."},
+        {"id":"d","text":"Zeitstempel der neuesten Version","correct":true,"explanation":"Er gehört zur Metadatenstruktur."}
+      ],
+      "explanation": "Die Keydir hält Keys und feste Metadaten im RAM, nicht alle Values.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folie 13"},
+      "tags": ["Bitcask","Keydir"]
+    },
+    {
+      "id": "kv-004",
+      "topic": "key-value",
+      "difficulty": 3,
+      "prompt": "Ein Bitcask enthält nacheinander put(k,A), put(k,B), delete(k), put(k,C). Welche Aussagen sind danach korrekt?",
+      "options": [
+        {"id":"a","text":"Die Dateien enthalten physisch vier angehängte Einträge für k.","correct":true,"explanation":"Zwei Puts, ein Tombstone und ein weiterer Put wurden angehängt."},
+        {"id":"b","text":"Die Keydir zeigt auf den Eintrag mit C.","correct":true,"explanation":"Das ist die neueste lebende Version."},
+        {"id":"c","text":"Der Tombstone muss dauerhaft in der Keydir stehen.","correct":false,"explanation":"Bei Delete wird k aus der Keydir entfernt; der spätere Put legt ihn wieder an."},
+        {"id":"d","text":"Ein Get(k) kann C mit höchstens einem gezielten Disk-Zugriff lesen.","correct":true,"explanation":"Die Keydir liefert Datei, Offset und Größe."}
+      ],
+      "explanation": "Physische Historie und logischer aktueller Zustand sind in append-only Stores getrennt.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 15–18"},
+      "tags": ["Bitcask","Ablauf"]
+    },
+    {
+      "id": "kv-005",
+      "topic": "key-value",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Bitcask-Merging und Hint Files sind korrekt?",
+      "options": [
+        {"id":"a","text":"Der Merge verarbeitet nicht aktive Datendateien.","correct":true,"explanation":"Die aktive Datei bleibt für laufende Writes verfügbar."},
+        {"id":"b","text":"Veraltete Versionen und von neueren Tombstones gelöschte Keys können entfernt werden.","correct":true,"explanation":"Das reduziert Space Amplification."},
+        {"id":"c","text":"Hint Files enthalten vollständige Values in komprimierter Form.","correct":false,"explanation":"Sie enthalten keine Values, sondern Positions- und Größeninformationen."},
+        {"id":"d","text":"Nach dem Merge müssen betroffene Keydir-Einträge auf neue Positionen zeigen.","correct":true,"explanation":"Die lebenden Werte wurden in neue Dateien geschrieben."}
+      ],
+      "explanation": "Merging bereinigt die Historie; Hint Files beschleunigen Startup und Recovery.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 18–19"},
+      "tags": ["Bitcask","Compaction"]
+    },
+    {
+      "id": "kv-006",
+      "topic": "key-value",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über Bitcasks Stärken und Schwächen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Writes sind überwiegend sequentielle Anhänge.","correct":true,"explanation":"Das ermöglicht hohen Durchsatz."},
+        {"id":"b","text":"Die Zahl der Keys kann unabhängig vom RAM beliebig wachsen.","correct":false,"explanation":"Alle Keys und Metadaten der Keydir liegen im RAM."},
+        {"id":"c","text":"Point Queries sind sehr effizient.","correct":true,"explanation":"Keydir plus höchstens ein Disk-Read."},
+        {"id":"d","text":"Range Queries sind ein natürlicher, effizienter Kernzugriff von Bitcask.","correct":false,"explanation":"Bitcask unterstützt im Wesentlichen Point Queries."}
+      ],
+      "explanation": "Bitcask tauscht RAM-Verbrauch und eingeschränkte Query-Arten gegen sehr einfache, schnelle Operationen.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 20–22"},
+      "tags": ["Bitcask","Trade-offs"]
+    },
+    {
+      "id": "kv-007",
+      "topic": "key-value",
+      "difficulty": 2,
+      "prompt": "Welche Komponenten eines LevelDB-artigen LSM-Trees liegen im RAM?",
+      "options": [
+        {"id":"a","text":"Mutable Memtable","correct":true,"explanation":"Sie ist der Einstiegspunkt für neue Reads und Writes."},
+        {"id":"b","text":"Immutable Memtable während des Flushs","correct":true,"explanation":"Sie bleibt vorübergehend als RAM-Struktur vorhanden."},
+        {"id":"c","text":"Alle SSTables aller Levels vollständig","correct":false,"explanation":"SSTables liegen auf Disk; nur Teile wie Indizes können gecacht sein."},
+        {"id":"d","text":"Das Write-Ahead Log ausschließlich","correct":false,"explanation":"Das WAL muss persistent auf Disk liegen."}
+      ],
+      "explanation": "Memtables sind flüchtig; WAL und SSTables sorgen für Persistenz.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 24–27"},
+      "tags": ["LSM","Komponenten"]
+    },
+    {
+      "id": "kv-008",
+      "topic": "key-value",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen unterscheiden Flush und Compaction korrekt?",
+      "options": [
+        {"id":"a","text":"Flush schreibt eine Immutable Memtable als SSTable nach Level 0.","correct":true,"explanation":"Das ist der Übergang von RAM zu Disk."},
+        {"id":"b","text":"Compaction führt SSTables zusammen und entfernt veraltete Versionen.","correct":true,"explanation":"Dabei werden Daten häufig in das nächste Level verschoben."},
+        {"id":"c","text":"Ein Flush garantiert sofort nicht überlappende Key-Ranges in Level 0.","correct":false,"explanation":"Level 0 darf überlappende SSTables enthalten."},
+        {"id":"d","text":"Compaction reduziert Read- und Space-Amplification, erhöht aber Write-Amplification.","correct":true,"explanation":"Daten müssen erneut gelesen und geschrieben werden."}
+      ],
+      "explanation": "Flush persistiert neue Daten; Compaction reorganisiert bereits persistierte Daten.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 29–31"},
+      "tags": ["LSM","Flush","Compaction"]
+    },
+    {
+      "id": "kv-009",
+      "topic": "key-value",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen über Leveling und Tiering sind korrekt?",
+      "options": [
+        {"id":"a","text":"Leveling hält SSTable-Keybereiche innerhalb höherer Levels nicht überlappend.","correct":true,"explanation":"Dadurch muss ein Point Lookup pro Level höchstens eine SSTable prüfen."},
+        {"id":"b","text":"Tiering erlaubt überlappende SSTables und bevorzugt damit typischerweise Writes.","correct":true,"explanation":"Weniger sofortige Zusammenführung senkt Write-Kosten."},
+        {"id":"c","text":"Leveling verursacht grundsätzlich weniger Write-Amplification als Tiering.","correct":false,"explanation":"Leveling schreibt Daten typischerweise häufiger um."},
+        {"id":"d","text":"Tiering kann die Read-Amplification erhöhen.","correct":true,"explanation":"Mehrere überlappende Dateien können relevant sein."}
+      ],
+      "explanation": "Leveling ist read-freundlicher, Tiering write-freundlicher.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 30–31"},
+      "tags": ["LSM","Compaction Strategy"]
+    },
+    {
+      "id": "kv-010",
+      "topic": "key-value",
+      "difficulty": 4,
+      "prompt": "Welche Reihenfolge beschreibt einen LSM-Get korrekt?",
+      "options": [
+        {"id":"a","text":"Mutable Memtable, Immutable Memtable, dann SSTables ab Level 0.","correct":true,"explanation":"Es wird von den neuesten zu älteren Schichten gesucht."},
+        {"id":"b","text":"In Level 0 werden bei Bedarf mehrere SSTables von neu nach alt geprüft.","correct":true,"explanation":"Ihre Key-Ranges können überlappen."},
+        {"id":"c","text":"In jedem Level > 0 müssen zwingend alle SSTables gelesen werden.","correct":false,"explanation":"Bei nicht überlappenden Bereichen kann höchstens eine den Key enthalten."},
+        {"id":"d","text":"Ein gefundener Tombstone bedeutet logisch „nicht vorhanden“ und beendet die Suche.","correct":true,"explanation":"Die neueste Version ist eine Löschung."}
+      ],
+      "explanation": "Die Suchreihenfolge muss die zeitlich neuesten Versionen priorisieren.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 33–34"},
+      "tags": ["LSM","Get"]
+    },
+    {
+      "id": "kv-011",
+      "topic": "key-value",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Bloom-Filter in LSM-Trees sind korrekt?",
+      "options": [
+        {"id":"a","text":"Ein negatives Ergebnis beweist, dass der Key nicht in dieser SSTable liegt.","correct":true,"explanation":"Bloom-Filter haben keine False Negatives."},
+        {"id":"b","text":"Ein positives Ergebnis beweist sicher, dass der Key vorhanden ist.","correct":false,"explanation":"False Positives sind möglich."},
+        {"id":"c","text":"Bloom-Filter helfen, unnötige SSTable-Zugriffe zu vermeiden.","correct":true,"explanation":"Viele Dateien können bereits vor einem Disk-Read ausgeschlossen werden."},
+        {"id":"d","text":"Bloom-Filter ersetzen den sortierten Blockindex vollständig.","correct":false,"explanation":"Nach einem möglichen Treffer wird der relevante Block etwa über Fence-Pointer lokalisiert."}
+      ],
+      "explanation": "Bloom-Filter beantworten „sicher nein“ oder „vielleicht ja“.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folie 35"},
+      "tags": ["Bloom Filter","Optimierung"]
+    },
+    {
+      "id": "kv-012",
+      "topic": "key-value",
+      "difficulty": 5,
+      "prompt": "Ein Bloom-Filter einer SSTable antwortet negativ, obwohl der gesuchte Key dort tatsächlich gespeichert ist. Welche Aussagen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Das ist ein zulässiges False Negative eines normalen Bloom-Filters.","correct":false,"explanation":"Normale Bloom-Filter haben keine False Negatives."},
+        {"id":"b","text":"Der Bloom-Filter oder seine Verwendung ist fehlerhaft.","correct":true,"explanation":"Ein vorhandenes Element darf nicht negativ getestet werden."},
+        {"id":"c","text":"Eine höhere False-Positive-Rate könnte dieses Verhalten erklären.","correct":false,"explanation":"False Positives betreffen nicht vorhandene Elemente mit positivem Ergebnis."},
+        {"id":"d","text":"Der Store könnte die SSTable fälschlich überspringen und einen falschen Read liefern.","correct":true,"explanation":"Genau deshalb ist die No-False-Negative-Eigenschaft notwendig."}
+      ],
+      "explanation": "Ein negatives Bloom-Ergebnis wird als sicherer Ausschluss verwendet.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folie 35"},
+      "tags": ["Bloom Filter","Fehleranalyse"]
+    },
+    {
+      "id": "kv-013",
+      "topic": "key-value",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen über einen LSM-Range-Scan [kmin,kmax] sind korrekt?",
+      "options": [
+        {"id":"a","text":"Relevante Memtables müssen berücksichtigt werden.","correct":true,"explanation":"Dort können die neuesten Versionen liegen."},
+        {"id":"b","text":"Jede SSTable mit überlappendem Key-Bereich kann relevante Einträge enthalten.","correct":true,"explanation":"Sie muss in den Merge einbezogen werden."},
+        {"id":"c","text":"Eine Merge-artige Auswertung bestimmt pro Key die neueste Version.","correct":true,"explanation":"Ältere Werte und Tombstones müssen korrekt aufgelöst werden."},
+        {"id":"d","text":"Die Sortierung der SSTables ist für Range Queries nutzlos.","correct":false,"explanation":"Sie ermöglicht effiziente Iteratoren und Merge-Verarbeitung."}
+      ],
+      "explanation": "Range Scans sind möglich, aber über mehrere sortierte und zeitlich geschichtete Quellen verteilt.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folie 36"},
+      "tags": ["LSM","Range Query"]
+    },
+    {
+      "id": "kv-014",
+      "topic": "key-value",
+      "difficulty": 5,
+      "prompt": "Welche Vergleiche zwischen Bitcask, LSM-Tree und B+-Tree sind korrekt?",
+      "options": [
+        {"id":"a","text":"Bitcask ist für Point Queries typischerweise einfacher und direkter als ein LSM-Tree.","correct":true,"explanation":"Keydir plus ein Disk-Read ist sehr effizient."},
+        {"id":"b","text":"LSM-Trees unterstützen Range Queries besser als log-strukturierte Hash-Tabellen.","correct":true,"explanation":"Keys und SSTables sind sortiert."},
+        {"id":"c","text":"LSM-Trees erreichen hohe Write-Raten unter anderem durch sequenzielle Writes und Memtable-Pufferung.","correct":true,"explanation":"Das ist ihre Hauptstärke gegenüber B+-Trees."},
+        {"id":"d","text":"LSM-Trees vermeiden jede Form von Hintergrund-I/O.","correct":false,"explanation":"Flush und besonders Compaction verursachen erhebliche Hintergrundarbeit."}
+      ],
+      "explanation": "Die Strukturen optimieren unterschiedliche Workloads; kein Design dominiert alle Zugriffe.",
+      "source": {"deck":"ADBS-KeyValueStores.pdf","pages":"Folien 37–38"},
+      "tags": ["Vergleich","Trade-offs"]
+    }
+  ]
+}

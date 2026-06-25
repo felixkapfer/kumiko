@@ -1,0 +1,9 @@
+[project]
+name = "adbs-exam-prep"
+version = "1.0.0"
+description = "Lokale Lern-App für die ADBS-Prüfung"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false

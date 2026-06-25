@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "label": "Document Stores & MongoDB",
+  "questions": [
+    {
+      "id": "doc-001",
+      "topic": "document",
+      "difficulty": 1,
+      "prompt": "Welche Aussagen unterscheiden Document Stores von reinen Key-Value Stores?",
+      "options": [
+        {"id":"a","text":"Ein Document Store versteht typischerweise Felder innerhalb von JSON-, XML- oder BSON-Dokumenten.","correct":true,"explanation":"Dadurch sind strukturbezogene Queries möglich."},
+        {"id":"b","text":"Ein Document Store kann nach Feldwerten filtern.","correct":true,"explanation":"Das gehört zu den erweiterten Abfragemöglichkeiten."},
+        {"id":"c","text":"Ein Key-Value Store darf niemals JSON als Wert speichern.","correct":false,"explanation":"Er kann JSON speichern, versteht dessen Struktur aber typischerweise nicht."},
+        {"id":"d","text":"Document Stores erfordern immer ein identisches starres Schema für alle Dokumente.","correct":false,"explanation":"Flexible Dokumentstrukturen sind ein typisches Merkmal."}
+      ],
+      "explanation": "Entscheidend ist nicht das Dateiformat allein, sondern ob das DBMS die Struktur versteht.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 4–6"},
+      "tags": ["Grundlagen","JSON"]
+    },
+    {
+      "id": "doc-002",
+      "topic": "document",
+      "difficulty": 2,
+      "prompt": "Welche Grundsätze sind bei der Dokumentmodellierung korrekt?",
+      "options": [
+        {"id":"a","text":"Das erwartete Zugriffsmuster soll die Modellierung beeinflussen.","correct":true,"explanation":"Document Models sind workload-orientiert."},
+        {"id":"b","text":"Gemeinsam atomar zu ändernde Daten sollten möglichst in einem Dokument liegen.","correct":true,"explanation":"Single-Document-Operationen sind die natürliche Atomaritätsgrenze."},
+        {"id":"c","text":"Die maximale BSON-Dokumentgröße kann ignoriert werden, wenn Arrays verwendet werden.","correct":false,"explanation":"Auch Arrays sind Teil des maximal 16 MB großen Dokuments."},
+        {"id":"d","text":"Indexentscheidungen gehören zur Datenmodellierung.","correct":true,"explanation":"Sie folgen den vorgesehenen Zugriffen."}
+      ],
+      "explanation": "Zugriffe, Updates, Atomarität, Wachstum, Validierung und Indizes müssen gemeinsam betrachtet werden.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 10"},
+      "tags": ["Modellierung","Grundsätze"]
+    },
+    {
+      "id": "doc-003",
+      "topic": "document",
+      "difficulty": 3,
+      "prompt": "Welche Modellierungsentscheidungen passen zu den Kardinalitäten der Vorlesung?",
+      "options": [
+        {"id":"a","text":"One-to-few: abhängige Objekte als eingebettetes Array im One-Dokument.","correct":true,"explanation":"Kleine, gemeinsam gelesene Mengen passen gut in ein Dokument."},
+        {"id":"b","text":"One-to-millions: Millionen Unterdokumente immer in ein einziges Array einbetten.","correct":false,"explanation":"Dokumentwachstum und 16-MB-Limit sprechen für getrennte Collections."},
+        {"id":"c","text":"One-to-thousands: Eine Referenzliste auf der One-Seite kann geeignet sein.","correct":true,"explanation":"Das ist eine der in den Folien genannten Varianten."},
+        {"id":"d","text":"One-to-millions: separate Collections und Referenz von der Many-Seite sind typischerweise passend.","correct":true,"explanation":"So bleibt das One-Dokument begrenzt."}
+      ],
+      "explanation": "Die Kardinalität ist eine wichtige, aber nicht die einzige Entscheidungsgröße.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 10–13"},
+      "tags": ["1:n","Embedding"]
+    },
+    {
+      "id": "doc-004",
+      "topic": "document",
+      "difficulty": 4,
+      "prompt": "Ein Kunde hat bis zu 30 Bestellungen. Kunde und letzte Bestellungen werden fast immer gemeinsam gelesen; Bestellungen werden nach Abschluss kaum geändert. Welche Aussagen sind plausibel?",
+      "options": [
+        {"id":"a","text":"Einbetten der Bestellungen kann die häufige gemeinsame Abfrage auf einen Dokument-Read reduzieren.","correct":true,"explanation":"Das Zugriffsmuster spricht für Embedding."},
+        {"id":"b","text":"Single-Document-Updates von Kunde und eingebetteter Bestellung können atomar sein.","correct":true,"explanation":"Beide Daten liegen in derselben Atomaritätsgrenze."},
+        {"id":"c","text":"Die Lösung ist unabhängig von Dokumentwachstum und 16-MB-Grenze immer optimal.","correct":false,"explanation":"Größe und Wachstum müssen weiter geprüft werden."},
+        {"id":"d","text":"Wären Bestellungen millionenfach und einzeln stark update-lastig, wären Referenzen eher geeignet.","correct":true,"explanation":"Dann wäre ein unbeschränkt wachsendes eingebettetes Array problematisch."}
+      ],
+      "explanation": "Embedding ist eine workload-bezogene Optimierung, keine universelle Regel.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 10–11"},
+      "tags": ["Szenario","Embedding"]
+    },
+    {
+      "id": "doc-005",
+      "topic": "document",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Denormalisierung sind korrekt?",
+      "options": [
+        {"id":"a","text":"Sie kopiert Daten redundant, um zusätzliche Reads oder Joins zu vermeiden.","correct":true,"explanation":"Das ist ihr Hauptzweck."},
+        {"id":"b","text":"Sie macht Updates über mehrere Dokumente automatisch atomar.","correct":false,"explanation":"Redundanz verschärft gerade das Problem nicht atomarer Mehrfachupdates."},
+        {"id":"c","text":"Sie ist besonders bei hohem Read-to-Write-Verhältnis attraktiv.","correct":true,"explanation":"Viele schnelle Reads rechtfertigen seltene teure Updates."},
+        {"id":"d","text":"Denormalisierung in die Many-Seite kann eine Änderung der One-Daten auf sehr viele Dokumente verteilen.","correct":true,"explanation":"Das erhöht die Update-Kosten stark."}
+      ],
+      "explanation": "Denormalisierung tauscht Konsistenz- und Update-Aufwand gegen schnellere Reads.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 14–15"},
+      "tags": ["Denormalisierung","Trade-offs"]
+    },
+    {
+      "id": "doc-006",
+      "topic": "document",
+      "difficulty": 5,
+      "prompt": "Eine relationale n:m-Beziehung Student–Lecture wird in zwei Collections modelliert. Jeder Student speichert Lecture-IDs, jede Lecture Student-IDs; die eigentlichen Exam-Daten stehen separat. Welche Aussagen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Zugriffe von beiden Seiten auf die Nachbarschaft können ohne Scan der jeweils anderen Collection erfolgen.","correct":true,"explanation":"Beide Dokumenttypen besitzen Referenzlisten."},
+        {"id":"b","text":"Das Hinzufügen einer Beziehung erfordert konsistente Änderungen an mindestens zwei Dokumenten.","correct":true,"explanation":"Beide Referenzlisten müssen angepasst werden."},
+        {"id":"c","text":"Eine leere Referenzliste [] ist semantisch dasselbe wie ein fehlendes Feld.","correct":false,"explanation":"[] repräsentiert eine vorhandene, leere Beziehungsliste; ein fehlendes Feld kann andere Bedeutung haben."},
+        {"id":"d","text":"Die Modellierung beseitigt jede Redundanz.","correct":false,"explanation":"Die Beziehung wird auf beiden Seiten redundant dargestellt."}
+      ],
+      "explanation": "Bidirektionale Referenzen beschleunigen Reads, erhöhen aber den Pflegeaufwand.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 12–15"},
+      "tags": ["n:m","Referenzen"]
+    },
+    {
+      "id": "doc-007",
+      "topic": "document",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über MongoDB Replica Sets sind korrekt?",
+      "options": [
+        {"id":"a","text":"Writes werden am Primary ausgeführt.","correct":true,"explanation":"Der Primary ist der Write-Einstiegspunkt."},
+        {"id":"b","text":"Secondaries spielen die Operationen des Primary über Logs in derselben Reihenfolge nach.","correct":true,"explanation":"So erfolgt die Replikation."},
+        {"id":"c","text":"Ein Arbiter speichert eine vollständige Datenkopie, darf aber nicht wählen.","correct":false,"explanation":"Es ist umgekehrt: Er wählt, trägt aber keine Daten."},
+        {"id":"d","text":"Bei Primary-Ausfall können Secondaries eine Wahl durchführen.","correct":true,"explanation":"Ein neuer Primary kann gewählt werden."}
+      ],
+      "explanation": "Replica Sets kombinieren Primary-Secondary-Replikation mit automatischer Wahl.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 19"},
+      "tags": ["MongoDB","Replikation"]
+    },
+    {
+      "id": "doc-008",
+      "topic": "document",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über MongoDB Read Preferences sind korrekt?",
+      "options": [
+        {"id":"a","text":"primary ist die Standardpräferenz.","correct":true,"explanation":"Reads gehen standardmäßig an den Primary."},
+        {"id":"b","text":"secondaryPreferred liest nach Möglichkeit von einem Secondary und sonst vom Primary.","correct":true,"explanation":"Das ist die Fallback-Semantik."},
+        {"id":"c","text":"nearest wählt zwingend den Server mit dem neuesten Datenstand.","correct":false,"explanation":"Entscheidend ist Netzwerklatenz, nicht Aktualität."},
+        {"id":"d","text":"Reads von Secondaries können stale Daten zurückgeben.","correct":true,"explanation":"Die Replikation erfolgt nicht zwingend synchron."}
+      ],
+      "explanation": "Read Preference bestimmt den Zielknoten und beeinflusst Latenz, Last und mögliche Staleness.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 20"},
+      "tags": ["Read Preference","MongoDB"]
+    },
+    {
+      "id": "doc-009",
+      "topic": "document",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen trennen Write Concern, Read Concern und Read Preference korrekt?",
+      "options": [
+        {"id":"a","text":"Write Concern w:2 verlangt Bestätigungen von zwei Servern.","correct":true,"explanation":"Die konkrete Anzahl kann angegeben werden."},
+        {"id":"b","text":"j:true verlangt, dass der Write in das On-Disk-Journal geschrieben wurde.","correct":true,"explanation":"Das erhöht die Persistenzgarantie."},
+        {"id":"c","text":"Read Concern majority und Read Preference secondary sind identische Einstellungen.","correct":false,"explanation":"Concern bestimmt die geforderte Sicht, Preference das Leseziel."},
+        {"id":"d","text":"Read Concern local liest den aktuellen Wert des ausgewählten Read Targets.","correct":true,"explanation":"Das ist der Default-Read-Concern."}
+      ],
+      "explanation": "Wo gelesen wird und welche Version als akzeptabel gilt, sind getrennte Entscheidungen.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 20–22"},
+      "tags": ["Concerns","MongoDB"]
+    },
+    {
+      "id": "doc-010",
+      "topic": "document",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über MongoDB-Transaktionen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Single-Document-Operationen sind auch ohne explizite Multi-Document-Transaktion atomar.","correct":true,"explanation":"Das ist die bevorzugte schnelle Atomaritätsgrenze."},
+        {"id":"b","text":"Multi-Document-ACID-Transaktionen existieren seit MongoDB 4.0.","correct":true,"explanation":"Sie wurden 2018 eingeführt."},
+        {"id":"c","text":"Mit Transaktionen ist die Wahl passender Dokumentgrenzen bedeutungslos.","correct":false,"explanation":"Single-Document-Operationen bleiben performanter und einfacher."},
+        {"id":"d","text":"Eine Session kann eine Transaktion committen oder abbrechen.","correct":true,"explanation":"commitTransaction und abortTransaction sind vorgesehen."}
+      ],
+      "explanation": "MongoDB unterstützt ACID über mehrere Dokumente, empfiehlt aber weiterhin aggregatgerechte Modellierung.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 23"},
+      "tags": ["Transaktionen","Atomarität"]
+    },
+    {
+      "id": "doc-011",
+      "topic": "document",
+      "difficulty": 3,
+      "prompt": "Welche Komponenten gehören zu einem MongoDB Sharded Cluster?",
+      "options": [
+        {"id":"a","text":"Mindestens zwei Shards","correct":true,"explanation":"Die Folien nennen zwei oder mehr."},
+        {"id":"b","text":"Ein oder mehrere mongos Query Router","correct":true,"explanation":"Sie routen Anfragen."},
+        {"id":"c","text":"Config Server als Replica Set","correct":true,"explanation":"Sie speichern Cluster-Metadaten und Konfiguration."},
+        {"id":"d","text":"Jeder Shard muss eine einzelne nicht replizierte Datei sein.","correct":false,"explanation":"Ein Shard wird als Replica Set betrieben."}
+      ],
+      "explanation": "Sharding und Replikation sind in MongoDB ineinander verschachtelt.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 24"},
+      "tags": ["Sharding","Architektur"]
+    },
+    {
+      "id": "doc-012",
+      "topic": "document",
+      "difficulty": 4,
+      "prompt": "Gegeben ist db.books.find({price: {$gte: 10, $lte: 20}}, {title: true, _id: false}). Welche Aussagen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Es werden Bücher mit Preis zwischen 10 und 20 einschließlich gesucht.","correct":true,"explanation":"$gte und $lte sind inklusive."},
+        {"id":"b","text":"Im Ergebnis wird title angezeigt.","correct":true,"explanation":"title:true nimmt das Feld in die Projektion auf."},
+        {"id":"c","text":"Das _id-Feld wird unterdrückt.","correct":true,"explanation":"_id:false schließt es explizit aus."},
+        {"id":"d","text":"Die Query verändert die passenden Dokumente.","correct":false,"explanation":"find ist eine Read-Operation."}
+      ],
+      "explanation": "Das erste Dokument ist der Filter, das zweite die Projektion.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 28–29"},
+      "tags": ["MongoDB","find"]
+    },
+    {
+      "id": "doc-013",
+      "topic": "document",
+      "difficulty": 4,
+      "prompt": "Welche MongoDB-Update-Aussagen sind korrekt?",
+      "options": [
+        {"id":"a","text":"$set kann ein vorhandenes Feld ändern oder ein neues hinzufügen.","correct":true,"explanation":"Es setzt den angegebenen Feldwert."},
+        {"id":"b","text":"$unset entfernt ein Feld.","correct":true,"explanation":"Der Feldwert wird aus dem Dokument gelöscht."},
+        {"id":"c","text":"updateMany({}, {$inc:{x:1}}) erhöht x in allen Dokumenten der Collection.","correct":true,"explanation":"Die leere Query matcht alle Dokumente."},
+        {"id":"d","text":"updateOne aktualisiert garantiert alle passenden Dokumente.","correct":false,"explanation":"Es aktualisiert nur ein passendes Dokument."}
+      ],
+      "explanation": "Query, Update-Operator und One/Many-Variante bestimmen Reichweite und Wirkung.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folie 30"},
+      "tags": ["MongoDB","Update"]
+    },
+    {
+      "id": "doc-014",
+      "topic": "document",
+      "difficulty": 5,
+      "prompt": "Ein System soll Namen aller Gäste liefern, die in einem Jahr eingecheckt haben. Bookings ändern sich häufig, Guest-Namen sehr selten. Welche Designaussagen sind vertretbar?",
+      "options": [
+        {"id":"a","text":"guest_name und ein abgeleitetes year direkt im Booking zu speichern kann die Zielquery ohne Join ermöglichen.","correct":true,"explanation":"Das denormalisiert gezielt für den häufigen Read."},
+        {"id":"b","text":"Die seltene Umbenennung eines Gasts kann Updates mehrerer Booking-Dokumente erfordern.","correct":true,"explanation":"Das ist der Preis der redundanten Namen."},
+        {"id":"c","text":"Weil Bookings häufig geschrieben werden, ist jede Form von Denormalisierung automatisch unzulässig.","correct":false,"explanation":"Der konkrete Trade-off kann dennoch sinnvoll sein; die Zusatzfelder sind klein und die Query wichtig."},
+        {"id":"d","text":"Ein Index auf year kann die Filterung unterstützen.","correct":true,"explanation":"Das abgeleitete Feld schafft einen direkten indexierbaren Zugriff."}
+      ],
+      "explanation": "Gute Dokumentmodelle optimieren den konkreten Workload und benennen ihre Update-Kosten explizit.",
+      "source": {"deck":"ADBS-DocumentStores.pdf","pages":"Folien 10–15"},
+      "tags": ["Szenario","Denormalisierung"]
+    }
+  ]
+}

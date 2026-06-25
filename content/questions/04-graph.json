@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "label": "Graphdatenbanken & Cypher",
+  "questions": [
+    {
+      "id": "graph-001",
+      "topic": "graph",
+      "difficulty": 1,
+      "prompt": "Welche Aussagen beschreiben das Property-Graph-Modell korrekt?",
+      "options": [
+        {"id":"a","text":"Knoten können Labels besitzen.","correct":true,"explanation":"Labels drücken Rollen im Anwendungsbereich aus."},
+        {"id":"b","text":"Beziehungen sind benannt und gerichtet.","correct":true,"explanation":"Typ und Richtung sind Kernbestandteile."},
+        {"id":"c","text":"Nur Knoten, nicht aber Beziehungen, können Properties tragen.","correct":false,"explanation":"Beide können Key-Value-Properties besitzen."},
+        {"id":"d","text":"Beziehungen werden als First-Class Citizens behandelt.","correct":true,"explanation":"Sie sind zentrale, direkt gespeicherte Datenobjekte."}
+      ],
+      "explanation": "Property Graphs modellieren Knoten und Beziehungen explizit und eigenschaftsreich.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 5–7"},
+      "tags": ["Property Graph","Grundlagen"]
+    },
+    {
+      "id": "graph-002",
+      "topic": "graph",
+      "difficulty": 2,
+      "prompt": "Welche Transformationen von einem relationalen in ein Graphmodell sind korrekt?",
+      "options": [
+        {"id":"a","text":"Eine Entitätstabelle wird typischerweise zu einem Node Label.","correct":true,"explanation":"Jede Zeile wird dann ein Knoten dieses Labels."},
+        {"id":"b","text":"Ein Fremdschlüssel kann durch eine Relationship ersetzt werden.","correct":true,"explanation":"Die Beziehung wird explizit."},
+        {"id":"c","text":"Eine n:m-Hilfstabelle kann zu einer Relationship werden, deren weitere Spalten Relationship Properties sind.","correct":true,"explanation":"Das ist die natürliche Transformation."},
+        {"id":"d","text":"Technische Primärschlüssel müssen zwingend als sichtbare Node Properties erhalten bleiben.","correct":false,"explanation":"Die Folien empfehlen, rein technische PKs zu entfernen."}
+      ],
+      "explanation": "Das Graphmodell entfernt relationale Navigationsartefakte und macht Beziehungen direkt.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 12–16"},
+      "tags": ["Transformation","Relational"]
+    },
+    {
+      "id": "graph-003",
+      "topic": "graph",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über Neo4j sind laut Vorlesung korrekt?",
+      "options": [
+        {"id":"a","text":"Writes laufen immer innerhalb einer Transaktion.","correct":true,"explanation":"Explizit oder implizit."},
+        {"id":"b","text":"Der Standard-Isolation-Level ist READ_COMMITTED.","correct":true,"explanation":"Höhere Isolation kann durch explizite Locks erreicht werden."},
+        {"id":"c","text":"Secondaries werden zwingend synchron vor jedem Commit aktualisiert.","correct":false,"explanation":"Secondaries werden asynchron repliziert."},
+        {"id":"d","text":"Bookmarks können Read-Your-Writes beziehungsweise kausale Konsistenz unterstützen.","correct":true,"explanation":"Sie verbinden aufeinanderfolgende Transaktionen kausal."}
+      ],
+      "explanation": "Neo4j kombiniert ACID-Transaktionen mit repliziertem Clusterbetrieb.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 17–19"},
+      "tags": ["Neo4j","Konsistenz"]
+    },
+    {
+      "id": "graph-004",
+      "topic": "graph",
+      "difficulty": 2,
+      "prompt": "Welche Cypher-Pattern-Bestandteile sind korrekt interpretiert?",
+      "options": [
+        {"id":"a","text":"(p:Person) bindet p an einen Knoten mit Label Person.","correct":true,"explanation":"Variable plus Label."},
+        {"id":"b","text":"-[:ACTED_IN]-> verlangt eine gerichtete Relationship dieses Typs.","correct":true,"explanation":"Richtung und Typ sind festgelegt."},
+        {"id":"c","text":"-[r]- bindet r an eine Relationship beliebigen Typs und beliebiger Richtung.","correct":true,"explanation":"Keine Typ- oder Richtungsbeschränkung."},
+        {"id":"d","text":"() bedeutet, dass an dieser Stelle kein Knoten existieren darf.","correct":false,"explanation":"() matcht einen beliebigen anonymen Knoten."}
+      ],
+      "explanation": "Anonyme Pattern-Elemente werden gematcht, aber nicht an Variablen gebunden.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 21–23"},
+      "tags": ["Cypher","Pattern"]
+    },
+    {
+      "id": "graph-005",
+      "topic": "graph",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen zur Relationship Uniqueness innerhalb eines Cypher-Patterns sind korrekt?",
+      "options": [
+        {"id":"a","text":"Dieselbe gespeicherte Relationship wird in einem einzelnen Pattern nicht zweimal für zwei Pattern-Kanten verwendet.","correct":true,"explanation":"Das verhindert im Co-Actor-Beispiel einen Match über dieselbe ACTED_IN-Kante hin und zurück."},
+        {"id":"b","text":"Derselbe Knoten darf in einem Pattern niemals zweimal vorkommen.","correct":false,"explanation":"Die Einschränkung betrifft Relationships, nicht generell Knoten."},
+        {"id":"c","text":"Durch Aufteilung in zwei MATCH-Klauseln kann eine Relationship in getrennten Patterns erneut gematcht werden.","correct":true,"explanation":"Die Uniqueness gilt pro Pattern."},
+        {"id":"d","text":"Die Regel bedeutet, dass ein Relationship-Typ global nur einmal in einer Query vorkommen darf.","correct":false,"explanation":"Mehrere verschiedene Relationships desselben Typs sind völlig zulässig."}
+      ],
+      "explanation": "Die Regel betrifft die Identität einer Relationship innerhalb eines einzelnen Patterns.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folie 24"},
+      "tags": ["Cypher","Relationship Uniqueness"]
+    },
+    {
+      "id": "graph-006",
+      "topic": "graph",
+      "difficulty": 3,
+      "prompt": "Welche Pfadlängen werden von den Cypher-Ausdrücken zugelassen?",
+      "options": [
+        {"id":"a","text":"[:R*2] erlaubt exakt zwei R-Relationships.","correct":true,"explanation":"Eine einzelne Zahl ohne Punkte ist eine feste Länge."},
+        {"id":"b","text":"[:R*1..3] erlaubt Längen 1, 2 und 3.","correct":true,"explanation":"Beide Grenzen sind inklusive."},
+        {"id":"c","text":"[:R*0..1] kann auch nur den Startknoten matchen.","correct":true,"explanation":"Länge 0 ist erlaubt."},
+        {"id":"d","text":"[:R*..2] verlangt mindestens zwei Relationships.","correct":false,"explanation":"Die obere Grenze ist 2; die Untergrenze ist nicht 2."}
+      ],
+      "explanation": "Min- und Max-Hops beschreiben Relationship-Anzahlen, nicht Knotenzahlen.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folie 26"},
+      "tags": ["Cypher","Variable Length"]
+    },
+    {
+      "id": "graph-007",
+      "topic": "graph",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Pfadvariablen und Shortest-Path-Funktionen sind korrekt?",
+      "options": [
+        {"id":"a","text":"nodes(p) liefert die Knoten eines Pfads.","correct":true,"explanation":"relationships(p) liefert entsprechend die Kanten."},
+        {"id":"b","text":"length(p) zählt die Relationships des Pfads.","correct":true,"explanation":"Nicht die Zahl der Knoten."},
+        {"id":"c","text":"shortestPath liefert einen kürzesten Pfad pro Match.","correct":true,"explanation":"Es ist nicht zwingend ein einziger globaler Pfad über alle Zielknoten."},
+        {"id":"d","text":"allShortestPaths liefert auch längere, nicht kürzeste Alternativen.","correct":false,"explanation":"Es liefert alle gleich kurzen kürzesten Pfade."}
+      ],
+      "explanation": "Pfadlänge und Anzahl der Pfade sind getrennte Aspekte.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 27–28"},
+      "tags": ["Paths","Shortest Path"]
+    },
+    {
+      "id": "graph-008",
+      "topic": "graph",
+      "difficulty": 4,
+      "prompt": "Gegeben ist der folgende Graph. Welche Städte liefert die Query?",
+      "context": "HAS_AIRPORT: Vienna→VIE, Paris→CDG, Berlin→BER, Berlin→TXL\nFLIGHT: VIE→CDG, CDG→BER, VIE→TXL, TXL→VIE, BER→VIE\n\nMATCH (:City {name:'Vienna'})-[:HAS_AIRPORT]->(:Airport)-[:FLIGHT*1..2]->(a:Airport),\n      (c:City)-[:HAS_AIRPORT]->(a)\nRETURN DISTINCT c.name",
+      "options": [
+        {"id":"a","text":"Paris","correct":true,"explanation":"VIE→CDG ist ein Hop."},
+        {"id":"b","text":"Berlin","correct":true,"explanation":"VIE→TXL ist ein Hop und VIE→CDG→BER sind zwei Hops."},
+        {"id":"c","text":"Vienna","correct":true,"explanation":"VIE→TXL→VIE ist ein Zwei-Hop-Pfad zurück nach VIE."},
+        {"id":"d","text":"Keine Stadt, weil variable Pfade nicht mit einem zweiten Pattern kombiniert werden dürfen.","correct":false,"explanation":"Die Query ist gültig."}
+      ],
+      "explanation": "Der Zwei-Hop-Zyklus führt dazu, dass auch der Startflughafen und damit Vienna zurückgegeben wird.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 23–28"},
+      "tags": ["Cypher","Auswertung"]
+    },
+    {
+      "id": "graph-009",
+      "topic": "graph",
+      "difficulty": 5,
+      "prompt": "Gegeben ist derselbe Graph. Welche (Airport,length)-Paare liefert die Query?",
+      "context": "FLIGHT: VIE→CDG, CDG→BER, VIE→TXL, TXL→VIE, BER→VIE\n\nMATCH p = allShortestPaths((a:Airport)-[:FLIGHT*]->(:Airport {code:'BER'}))\nWHERE a.code <> 'BER'\nRETURN a.code, length(p)",
+      "options": [
+        {"id":"a","text":"CDG, 1","correct":true,"explanation":"CDG→BER ist direkt."},
+        {"id":"b","text":"VIE, 2","correct":true,"explanation":"VIE→CDG→BER ist der kürzeste Pfad."},
+        {"id":"c","text":"TXL, 3","correct":true,"explanation":"TXL→VIE→CDG→BER."},
+        {"id":"d","text":"BER, 0","correct":false,"explanation":"Der WHERE-Filter schließt a=BER aus."}
+      ],
+      "explanation": "Für jeden möglichen Startflughafen wird dessen kürzeste gerichtete FLIGHT-Verbindung nach BER betrachtet.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 26–28"},
+      "tags": ["allShortestPaths","Auswertung"]
+    },
+    {
+      "id": "graph-010",
+      "topic": "graph",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen unterscheiden CREATE und MERGE korrekt?",
+      "options": [
+        {"id":"a","text":"CREATE erzeugt das angegebene Muster auch dann neu, wenn ein gleiches bereits existiert.","correct":true,"explanation":"CREATE prüft keine Duplikate."},
+        {"id":"b","text":"MERGE versucht zuerst das vollständig angegebene Muster zu matchen.","correct":true,"explanation":"Nur bei Fehlschlag wird erzeugt."},
+        {"id":"c","text":"MERGE (p:Person {name:'Alice', age:25}) muss einen vorhandenen Alice-Knoten ohne age matchen.","correct":false,"explanation":"Das vollständige Property-Pattern passt nicht; ein neuer Knoten kann entstehen."},
+        {"id":"d","text":"ON CREATE und ON MATCH können unterschiedliche SET-Aktionen ausführen.","correct":true,"explanation":"Das ist eine Zusatzfunktion von MERGE."}
+      ],
+      "explanation": "MERGE verhindert nur Duplikate relativ zu exakt dem Pattern, das es matchen soll.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 29–31"},
+      "tags": ["CREATE","MERGE"]
+    },
+    {
+      "id": "graph-011",
+      "topic": "graph",
+      "difficulty": 4,
+      "prompt": "Es existiert (:Person {name:'Alice'}), aber ohne age-Property. Was kann MERGE (p:Person {name:'Alice', age:25}) bewirken?",
+      "options": [
+        {"id":"a","text":"Es kann einen zweiten Person-Knoten namens Alice mit age=25 erzeugen.","correct":true,"explanation":"Der vorhandene Knoten matcht das vollständige Property-Muster nicht."},
+        {"id":"b","text":"Es ergänzt zwingend age=25 am vorhandenen Alice-Knoten.","correct":false,"explanation":"MERGE patcht keinen partiellen Match automatisch."},
+        {"id":"c","text":"Ein Uniqueness Constraint auf Person.name könnte die Erzeugung des zweiten Knotens verhindern und einen Fehler auslösen.","correct":true,"explanation":"Der neue Knoten würde den eindeutigen Namen verletzen."},
+        {"id":"d","text":"MERGE ignoriert alle Properties beim Matching.","correct":false,"explanation":"Properties im MERGE-Pattern sind Teil des Matches."}
+      ],
+      "explanation": "Für kontrollierte Updates ist häufig MERGE auf einem eindeutigen Schlüssel plus separates SET sicherer.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 30–31, 38"},
+      "tags": ["MERGE","Constraints"]
+    },
+    {
+      "id": "graph-012",
+      "topic": "graph",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über SET und DELETE sind korrekt?",
+      "options": [
+        {"id":"a","text":"SET p.age = null entfernt die age-Property.","correct":true,"explanation":"Das ist äquivalent zu REMOVE p.age."},
+        {"id":"b","text":"DELETE kann einen Knoten mit bestehenden Relationships ohne weitere Maßnahmen löschen.","correct":false,"explanation":"Zuerst müssen Kanten gelöscht oder DETACH DELETE verwendet werden."},
+        {"id":"c","text":"DETACH DELETE löscht einen Knoten und seine ein- sowie ausgehenden Relationships.","correct":true,"explanation":"Das ist genau seine Wirkung."},
+        {"id":"d","text":"Eine Relationship kann mit DELETE direkt gelöscht werden.","correct":true,"explanation":"Nach MATCH auf die Relationship ist DELETE r zulässig."}
+      ],
+      "explanation": "Knotenlöschung schützt standardmäßig vor verwaisten Relationships.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 32–33"},
+      "tags": ["SET","DELETE"]
+    },
+    {
+      "id": "graph-013",
+      "topic": "graph",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen über Cypher-Aggregation und WITH sind korrekt?",
+      "options": [
+        {"id":"a","text":"Nicht aggregierte RETURN-Felder bilden implizit die Gruppierung.","correct":true,"explanation":"Ein explizites GROUP BY ist nicht nötig."},
+        {"id":"b","text":"count(expr) zählt auch NULL-Werte von expr.","correct":false,"explanation":"count(expr) zählt nur Nicht-NULL-Werte."},
+        {"id":"c","text":"WITH kann ein Aggregat benennen und im nächsten Query-Teil über WHERE filtern.","correct":true,"explanation":"Beispiel: WITH p,count(*) AS n WHERE n>5."},
+        {"id":"d","text":"collect() erzeugt eine Liste von Werten.","correct":true,"explanation":"Es ist eine Cypher-Aggregatfunktion."}
+      ],
+      "explanation": "WITH ist die Pipeline-Grenze für mehrstufige Aggregation und Filterung.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 34–36"},
+      "tags": ["Aggregation","WITH"]
+    },
+    {
+      "id": "graph-014",
+      "topic": "graph",
+      "difficulty": 5,
+      "prompt": "Welche Queries beantworten korrekt: „Liste Städte mit mindestens einem Flughafen, von dem eine direkte TRAIN-Verbindung zu einem anderen Flughafen ausgeht“?",
+      "options": [
+        {"id":"a","text":"MATCH (c:City)-[:HAS_AIRPORT]->(:Airport)-[:TRAIN]->(:Airport) RETURN DISTINCT c.name","correct":true,"explanation":"Das Pattern fordert genau die gewünschte ausgehende TRAIN-Kante."},
+        {"id":"b","text":"MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) WHERE EXISTS { (a)-[:TRAIN]->(:Airport) } RETURN DISTINCT c.name","correct":true,"explanation":"Die Existenz-Subquery formuliert dieselbe Bedingung."},
+        {"id":"c","text":"MATCH (c:City)-[:HAS_AIRPORT]->(:Airport)<-[:TRAIN]-(:Airport) RETURN DISTINCT c.name","correct":false,"explanation":"Das verlangt eine eingehende TRAIN-Verbindung zum Stadtflughafen."},
+        {"id":"d","text":"MATCH (:Airport)-[:TRAIN]->(a:Airport)<-[:HAS_AIRPORT]-(c:City) RETURN DISTINCT c.name","correct":false,"explanation":"Auch das listet Ziele eingehender TRAIN-Verbindungen, nicht deren Ausgangsstädte."}
+      ],
+      "explanation": "Bei gerichteten Beziehungen entscheidet die Pfeilrichtung über Ausgangs- und Zielstadt.",
+      "source": {"deck":"ADBS-Graph.pdf","pages":"Folien 22–25"},
+      "tags": ["Cypher","Query Design"]
+    }
+  ]
+}

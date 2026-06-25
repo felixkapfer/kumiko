@@ -1,0 +1,578 @@
+[
+  {
+    "id": "nosql",
+    "title": "NoSQL & verteilte Konsistenz",
+    "shortTitle": "NoSQL",
+    "color": "#b8f34a",
+    "deck": "ADBS-NoSQL.pdf",
+    "pages": "51 Folien",
+    "overview": "Warum NoSQL-Systeme entstanden sind, wie Aggregate und Verteilung das Datenmodell prägen und welche exakten Garantien CAP, PACELC, Quoren sowie logische Uhren liefern.",
+    "examFocus": [
+      "CAP/PACELC sauber unterscheiden",
+      "Quorum-Ungleichungen prüfen",
+      "Lamport- und Vektoruhren berechnen",
+      "Konsistenzgarantien abgrenzen"
+    ],
+    "sections": [
+      {
+        "title": "Motivation und Grenzen relationaler Systeme",
+        "body": "Relationale DBMS besitzen ein starkes formales Fundament, SQL, Transaktionen und gute Integrationsfähigkeiten. NoSQL ersetzt diese Stärken nicht pauschal, sondern optimiert gezielt für neue Anforderungen wie sehr große Datenmengen, flexible Strukturen und horizontale Skalierung.",
+        "bullets": [
+          "Relationale Grenzen: starres Schema, homogene Zeilen und Spalten, Impedance Mismatch sowie Kosten für Locking, Logging und Buffer Management.",
+          "Neue Anforderungen: Volume, verschachtelte oder graphartige Strukturen, Schema-Evolution und sparse Daten.",
+          "Anwendungsdatenbanken erlauben Polyglot Persistence: Für jede Anwendung wird ein passendes System gewählt.",
+          "NoSQL bedeutet „Not only SQL“ und ist ein Sammelbegriff, keine einzelne Technologie."
+        ],
+        "pitfall": "Schemaless bedeutet nicht schemalos. Meist existiert ein implizites Schema im Anwendungscode und wird erst beim Lesen interpretiert."
+      },
+      {
+        "title": "Vier NoSQL-Kategorien",
+        "body": "Die Kategorien unterscheiden sich vor allem darin, was das DBMS über die gespeicherten Werte und Beziehungen weiß.",
+        "bullets": [
+          "Key-Value Store: Schlüssel adressiert einen für das DBMS weitgehend opaken Wert.",
+          "Document Store: kennt die Struktur von JSON/XML/BSON und kann nach Feldern filtern.",
+          "Column Store speichert relationale Werte spaltenweise; Wide Column Store adressiert Zellen über Row Key, Spalte und häufig Zeitstempel.",
+          "Graphdatenbank: Knoten und Beziehungen sind zentrale Modellierungselemente; Traversierungen sind der Hauptzugriff."
+        ],
+        "example": "Redis ist ein Key-Value Store, MongoDB ein Document Store, Bigtable ein Wide Column Store und Neo4j eine Graphdatenbank."
+      },
+      {
+        "title": "Aggregate und Datenmodellierung",
+        "body": "Ein Aggregat ist eine Menge von Objekten, die als Einheit gelesen, geschrieben, verteilt und häufig auch atomar geändert wird. Aggregate machen typische Zugriffe schnell, erschweren aber Transaktionen und Beziehungen über Aggregatgrenzen hinweg.",
+        "bullets": [
+          "NoSQL-Datenmodellierung ist meist zugriffs- und leseorientiert statt normalisierungsorientiert.",
+          "Referenzen zwischen Aggregaten werden häufig nur durch IDs dargestellt; ihre Semantik kennt oft nur die Anwendung.",
+          "Materialisierte Sichten können alternative Zugriffspfade vorberechnen und eager oder lazy aktualisiert werden.",
+          "Graphdatenbanken sind aggregate-ignorant: Die entscheidende Information steckt oft in Beziehungen."
+        ],
+        "pitfall": "Eine für einen Zugriff optimale Aggregatgrenze kann für einen anderen Zugriff ungeeignet sein. Es gibt keine allgemein richtige Einbettung."
+      },
+      {
+        "title": "Sharding und Replikation",
+        "body": "Sharding verteilt unterschiedliche Daten auf Knoten; Replikation hält Kopien derselben Daten. Aggregate sind häufig die natürliche Einheit des Shardings.",
+        "bullets": [
+          "Primary-Secondary: Writes über Primary, gute Read-Skalierung, Primary kann Flaschenhals und Single Point of Failure sein.",
+          "Peer-to-Peer: Alle Knoten akzeptieren Reads und Writes; hohe Skalierung, aber zusätzliche Write-Write-Konflikte.",
+          "Optimistische Konfliktbehandlung erlaubt Konflikte und führt sie anwendungsspezifisch zusammen.",
+          "Inconsistency Window bezeichnet die Zeit bis alle Replikate wieder konsistent sind."
+        ],
+        "example": "Ein Client schreibt am Primary und liest unmittelbar danach von einem verzögerten Secondary. Ohne Read-Your-Writes kann er seinen eigenen Write noch nicht sehen."
+      },
+      {
+        "title": "Konsistenz, ACID und BASE",
+        "body": "Starke Konsistenz lässt einen Cluster wie eine einzelne, sequenziell arbeitende Kopie erscheinen. Schwächere Modelle formulieren gezieltere Garantien und reduzieren Koordination.",
+        "bullets": [
+          "Eventual Consistency: Ohne weitere Updates konvergieren die Replikate irgendwann.",
+          "Causal Consistency ordnet kausal zusammenhängende Operationen, nicht zwingend unabhängige.",
+          "Session-Garantien: Read-Your-Writes, Monotonic Reads, Monotonic Writes und Writes-Follow-Reads.",
+          "BASE steht für Basically Available, Soft State, Eventual Consistency."
+        ],
+        "pitfall": "Eventual Consistency legt keine feste Dauer bis zur Konvergenz fest und garantiert nicht, dass jeder einzelne Read aktuell ist."
+      },
+      {
+        "title": "CAP und PACELC",
+        "body": "CAP betrachtet einen konkreten Netzwerkpartitionierungsfall. Während einer Partition kann ein System nicht gleichzeitig Single-Copy Consistency und Availability für jede Anfrage an nicht ausgefallene Knoten garantieren.",
+        "bullets": [
+          "Consistency: Verhalten wie eine einzelne Kopie mit serieller Verarbeitung.",
+          "Availability: Jede Anfrage an einen nicht ausgefallenen Knoten erhält eine Antwort.",
+          "Partition Tolerance: Betrieb wird trotz in Kommunikationsgruppen zerfallenem Netzwerk fortgesetzt.",
+          "Da Partitionen nicht ausgeschlossen werden können, ist die praktische Entscheidung AP oder CP.",
+          "PACELC ergänzt: Bei Partition A versus C; Else Latenz versus Konsistenz."
+        ],
+        "formula": "PACELC = if Partition: Availability vs. Consistency; Else: Latency vs. Consistency",
+        "pitfall": "CAP-Availability bedeutet nicht, dass lediglich irgendein Knoten läuft. Jede Anfrage an einen nicht ausgefallenen Knoten muss beantwortet werden."
+      },
+      {
+        "title": "Quorum Consensus",
+        "body": "Bei Replikationsfaktor N geben W und R an, wie viele Replikate einen Write beziehungsweise Read bestätigen müssen. Die Überlappung verhindert disjunkte Writes und sorgt dafür, dass ein Read mindestens ein Replikat des letzten Writes erreicht.",
+        "bullets": [
+          "Write-Write-Überlappung: Zwei Write-Quoren müssen sich schneiden.",
+          "Read-Write-Überlappung: Jedes Read-Quorum muss sich mit jedem Write-Quorum schneiden.",
+          "ROWA: Read One, Write All mit R = 1 und W = N.",
+          "Version Stamps bleiben notwendig, um innerhalb des Read-Quorums die neueste Version zu erkennen."
+        ],
+        "formula": "2W > N  und  R + W > N",
+        "pitfall": "R + W > N allein reicht nicht. Zusätzlich muss 2W > N gelten."
+      },
+      {
+        "title": "Lamport- und Vektoruhren",
+        "body": "Logische Uhren ordnen Ereignisse ohne synchronisierte physische Uhren. Die Happened-Before-Relation entsteht durch lokale Reihenfolge, Send-before-Receive und Transitivität.",
+        "bullets": [
+          "Lamport Send: lokalen Zähler erhöhen und mitsenden. Receive: max(lokal, empfangen) + 1.",
+          "Lamport erfüllt nur: e → e' impliziert C(e) < C(e'). Die Umkehrung gilt nicht.",
+          "Vektoruhr Send: eigene Komponente erhöhen. Receive: komponentenweises Maximum, danach eigene Komponente erhöhen.",
+          "Vektoren werden komponentenweise verglichen. Unvergleichbare Vektoren repräsentieren nebenläufige Ereignisse.",
+          "Vektoruhren erfüllen die starke Clock Property: e → e' genau dann, wenn VC(e) < VC(e')."
+        ],
+        "example": "Die Vektoren (3,1,2) und (2,4,2) sind unvergleichbar: Der erste ist in Komponente 1 größer, der zweite in Komponente 2.",
+        "pitfall": "Beim Empfang einer Vektoruhr wird erst das komponentenweise Maximum gebildet und anschließend die eigene Komponente erhöht."
+      }
+    ],
+    "checklist": [
+      "Ich kann für gegebene N, R und W beide Quorum-Bedingungen ohne Raten prüfen.",
+      "Ich kann CAP-Availability in der exakten Definition wiedergeben.",
+      "Ich kann einen Ablauf mit Lamport- und Vektoruhren Schritt für Schritt berechnen.",
+      "Ich erkenne bei zwei Vektoren Kausalität beziehungsweise Nebenläufigkeit.",
+      "Ich kann AP/CP und die vier PACELC-Präferenzen erklären.",
+      "Ich kann Sharding und Replikation sowie Primary-Secondary und Peer-to-Peer abgrenzen."
+    ]
+  },
+  {
+    "id": "key-value",
+    "title": "Key-Value Stores",
+    "shortTitle": "Key-Value",
+    "color": "#78a9ff",
+    "deck": "ADBS-KeyValueStores.pdf",
+    "pages": "39 Folien",
+    "overview": "Von einfachen Schlüssel-Wert-Zugriffen über Bitcasks append-only Hash-Tabelle bis zu LSM-Trees mit Memtables, SSTables, Bloom-Filtern und Compaction.",
+    "examFocus": [
+      "Bitcask-Operationen nachvollziehen",
+      "LSM-Leseweg kennen",
+      "Flush und Compaction trennen",
+      "Trade-offs vergleichen"
+    ],
+    "sections": [
+      {
+        "title": "Grundprinzip",
+        "body": "Key-Value Stores speichern Bytefolgen unter Schlüsseln. Die Semantik und innere Struktur des Werts kennt primär die Anwendung; das DBMS bietet meist keine komplexen Abfragen oder Joins.",
+        "bullets": [
+          "Typische Ziele: Skalierbarkeit, hohe Verfügbarkeit, geringe Latenz und hohe Write-Rate.",
+          "Typische Zugriffe: Session-ID → Sessiondaten, Zeitstempel → Sensorwert, Login → Benutzerattribute.",
+          "B+-Trees bieten logarithmische Reads und Writes; reine append-only Logs bieten konstante Writes, aber lineare Reads.",
+          "Log-strukturierte Stores kombinieren append-only Dateien mit einer Indexstruktur."
+        ],
+        "pitfall": "Ein JSON-Wert macht einen Store nicht automatisch zum Document Store. Entscheidend ist, ob das DBMS die Dokumentstruktur versteht und abfragen kann."
+      },
+      {
+        "title": "Bitcask: Aufbau",
+        "body": "Eine Bitcask-Instanz ist ein Verzeichnis aus Datendateien. Genau eine Datei ist aktiv und beschreibbar; geschlossene Dateien sind unveränderlich.",
+        "bullets": [
+          "Jeder Put hängt einen vollständigen neuen Eintrag an die aktive Datei an.",
+          "Ein Eintrag enthält CRC, Zeitstempel, Key- und Value-Länge, Key und Value.",
+          "Die Keydir ist eine Hash-Tabelle im RAM: Key → file_id, offset, value size, timestamp.",
+          "Die Keydir zeigt immer auf die neueste lebende Version eines Schlüssels."
+        ],
+        "example": "Ein Update überschreibt den alten Wert nicht. Es hängt eine neue Version an und setzt nur den Keydir-Zeiger um.",
+        "pitfall": "Geschlossene Bitcask-Dateien werden nicht erneut zum Schreiben geöffnet."
+      },
+      {
+        "title": "Bitcask: Operationen",
+        "body": "Put, Delete und Get bleiben einfach, weil alle Writes sequentiell erfolgen und Reads über die Keydir direkt positioniert werden.",
+        "bullets": [
+          "Put: Eintrag inklusive CRC anhängen; Keydir neu anlegen oder aktualisieren.",
+          "Delete: Tombstone anhängen und Schlüssel aus der Keydir entfernen.",
+          "Get: Metadaten aus Keydir lesen, dann höchstens ein gezielter Disk-Zugriff.",
+          "Merging/Compaction verarbeitet nicht aktive Dateien und behält nur die neueste lebende Version.",
+          "Hint Files enthalten Position und Größe, aber keine Werte; sie beschleunigen Rekonstruktion der Keydir."
+        ],
+        "pitfall": "Der Tombstone wird bei Bitcask nicht in der Keydir referenziert. Der Schlüssel wird aus der Keydir entfernt."
+      },
+      {
+        "title": "Bitcask: Stärken und Grenzen",
+        "body": "Bitcask erreicht vorhersehbare Point-Lookups und hohe Write-Raten, solange die Keydir in den Arbeitsspeicher passt.",
+        "bullets": [
+          "Writes sind sequentiell, Reads benötigen höchstens einen Disk-Zugriff.",
+          "Die Datendateien sind gleichzeitig Commit Log; nach Crash muss kein separates Write Log wiederholt werden.",
+          "CRC erkennt teilweise geschriebene letzte Einträge.",
+          "Backup bedeutet im Wesentlichen Kopieren unveränderlicher Datendateien.",
+          "Grenzen: alle Schlüssel plus Metadaten im RAM und nur Point Queries."
+        ]
+      },
+      {
+        "title": "LSM-Tree: Aufbau",
+        "body": "LSM-Trees halten neue Writes in einer sortierten Mutable Memtable. Nach Erreichen eines Grenzwerts wird sie immutable, anschließend als sortierte SSTable nach Level 0 geschrieben.",
+        "bullets": [
+          "Ein Write-Ahead Log schützt Memtable-Writes vor Crashverlust.",
+          "SSTables sind unveränderlich und nach Schlüssel sortiert.",
+          "Level 0 darf überlappende Schlüsselbereiche enthalten; in höheren Levels sind Bereiche beim Leveling disjunkt.",
+          "Manifest protokolliert die SSTable-Historie; CURRENT verweist auf das aktuelle Manifest.",
+          "Levelgrößen wachsen typischerweise exponentiell."
+        ],
+        "pitfall": "Die Slides nennen neuere Daten in höheren Levels im Sinn von Level 0 zuerst; beim Lesen wird aufsteigend ab Level 0 gesucht."
+      },
+      {
+        "title": "Flush und Compaction",
+        "body": "Flush bringt eine immutable Memtable als neue SSTable nach Level 0. Compaction verschmilzt SSTables, entfernt veraltete Versionen beziehungsweise Tombstones und verschiebt Daten in tiefere Levels.",
+        "bullets": [
+          "Die immutable Memtable puffert während des Flushs, damit neue Writes weiterlaufen.",
+          "Compaction reduziert Read- und Space-Amplification auf Kosten von Write-Amplification.",
+          "Leveling: nicht überlappende SSTables, günstigere Reads und weniger Speicherverbrauch.",
+          "Tiering: Überlappung erlaubt, günstigere Writes, aber mehr Sucharbeit.",
+          "Trigger können Levelgröße, Zeit, Tombstone-Zahl oder Space-Amplification sein."
+        ],
+        "pitfall": "Flush und Compaction sind nicht dasselbe: Flush schreibt RAM-Daten erstmals auf Disk; Compaction reorganisiert bereits vorhandene SSTables."
+      },
+      {
+        "title": "Put, Delete, Get und Scan",
+        "body": "Put und Delete ändern nur die Mutable Memtable und das WAL. Ein Get sucht von der neuesten zur älteren Schicht; ein Range Scan muss mehrere sortierte Quellen zusammenführen.",
+        "bullets": [
+          "Put in der Memtable kann logisch trotzdem ein Update eines älteren Werts in einer SSTable sein.",
+          "Delete schreibt immer einen Tombstone, selbst wenn der Key nicht in der Mutable Memtable steht.",
+          "Get: Mutable Memtable → Immutable Memtable → SSTables ab Level 0.",
+          "In Level 0 werden wegen überlappender Bereiche mehrere SSTables von neu nach alt geprüft.",
+          "Scan verwendet Iteratoren und eine Merge-Operation, um pro Key nur die neueste Version zu liefern."
+        ]
+      },
+      {
+        "title": "Optimierungen und Vergleich",
+        "body": "Bloom-Filter und Fence-Pointer reduzieren unnötige Disk-I/Os. Gegenüber B+-Trees sind LSM-Trees write-optimiert; gegenüber Bitcask skalieren sie besser bei vielen Keys und unterstützen Range Queries.",
+        "bullets": [
+          "Bloom-Filter haben keine False Negatives, aber mögliche False Positives.",
+          "Ein negatives Bloom-Ergebnis schließt die SSTable sicher aus.",
+          "Fence-Pointer bilden einen dünnen Index auf Blöcke innerhalb einer SSTable.",
+          "SSTables sind wegen Sortierung, Unveränderlichkeit und gemeinsamer Präfixe gut komprimierbar.",
+          "Nachteile: komplexere Reads, Merge bei Scans und Compaction-Kosten."
+        ],
+        "pitfall": "Ein Bloom-Filter beweist bei positivem Ergebnis nicht, dass der Schlüssel existiert. Er sagt nur „möglicherweise enthalten“."
+      }
+    ],
+    "checklist": [
+      "Ich kann nach mehreren Put/Delete-Operationen sagen, was Keydir und Dateien enthalten.",
+      "Ich kann den vollständigen LSM-Get-Pfad in der richtigen Reihenfolge nennen.",
+      "Ich unterscheide Mutable Memtable, Immutable Memtable, WAL, Manifest und SSTable.",
+      "Ich kann erklären, warum Delete einen Tombstone benötigt.",
+      "Ich kann Leveling und Tiering sowie Read-, Write- und Space-Amplification vergleichen.",
+      "Ich weiß genau, welche Aussagen Bloom-Filter erlauben."
+    ]
+  },
+  {
+    "id": "document",
+    "title": "Document Stores & MongoDB",
+    "shortTitle": "Documents",
+    "color": "#f2bb57",
+    "deck": "ADBS-DocumentStores.pdf",
+    "pages": "33 Folien",
+    "overview": "Dokumentorientierte Modellierung nach Zugriffsmustern, Referenzen versus Embedding und Denormalisierung sowie die wichtigsten MongoDB-Konzepte und Befehle.",
+    "examFocus": [
+      "Embedding/Referenzen wählen",
+      "Denormalisierung begründen",
+      "MongoDB-Garantien kennen",
+      "CRUD-Abfragen lesen"
+    ],
+    "sections": [
+      {
+        "title": "Grundprinzip und JSON",
+        "body": "Document Stores ähneln Key-Value Stores, verstehen aber die Struktur der Werte. Dadurch sind Filter auf Feldern, Projektionen und strukturbezogene Updates möglich.",
+        "bullets": [
+          "Typische Formate: XML, JSON und in MongoDB BSON.",
+          "JSON-Werte können einfache Werte, Arrays oder verschachtelte Objekte sein.",
+          "Joins sind meist nicht der bevorzugte Zugriff; Daten werden eingebettet, denormalisiert oder in der Anwendung kombiniert.",
+          "Typische Anwendungen: Logs, Produktkataloge, Warenkörbe und Content Management.",
+          "MongoDB-Dokumente dürfen maximal 16 MB groß sein."
+        ]
+      },
+      {
+        "title": "Zugriffsorientierte Modellierung",
+        "body": "Das Datenmodell wird vom erwarteten Workload bestimmt. Ziel sind häufig atomare Reads und Writes innerhalb eines einzelnen Dokuments.",
+        "bullets": [
+          "One-to-few: eingebettetes Array von Unterdokumenten ist oft passend.",
+          "One-to-thousands: Array von Referenzen auf der One-Seite kann sinnvoll sein.",
+          "One-to-millions: separate Collections mit Referenz auf der Many-Seite.",
+          "Schneller Zugriff von beiden Seiten kann redundante Referenzen in beiden Dokumenttypen rechtfertigen.",
+          "Indizes und Dokumentvalidierung gehören zur Modellierungsentscheidung."
+        ],
+        "pitfall": "Cardinality allein entscheidet nicht. Update-Häufigkeit, gemeinsame Zugriffe, Dokumentwachstum und gewünschte Atomarität sind ebenso wichtig."
+      },
+      {
+        "title": "n:m und Denormalisierung",
+        "body": "n:m-Beziehungen können wie relational über eine eigene Collection oder durch Referenzlisten auf einer oder beiden Seiten modelliert werden. Denormalisierung kopiert zusätzliche Felder, um Reads ohne Join zu ermöglichen.",
+        "bullets": [
+          "Denormalisierung in die One-Seite kopiert Many-Daten in das One-Dokument.",
+          "Denormalisierung in die Many-Seite vervielfacht One-Daten über viele Dokumente und macht Updates besonders teuer.",
+          "Redundante Updates über mehrere Dokumente sind ohne Transaktion nicht atomar.",
+          "Denormalisierung passt besonders zu einem hohen Read-to-Write-Verhältnis."
+        ],
+        "example": "Produktdaten mit eingebetteten Part-Namen beschleunigen Produktanzeigen; eine Namensänderung des Parts muss aber in mehreren Produktdokumenten nachgezogen werden.",
+        "pitfall": "Eine leere Liste [] ist ein vorhandener Feldwert. Sie ist nicht dasselbe wie ein vollständig fehlendes Feld."
+      },
+      {
+        "title": "Validierung, Replikation und Reads",
+        "body": "MongoDB speichert BSON, kann Collections mit JSON-Schema validieren und verwendet Replica Sets mit einem Primary sowie mehreren Secondaries.",
+        "bullets": [
+          "Writes werden am Primary ausgeführt und per Operation Log an Secondaries propagiert.",
+          "Bei ausbleibendem Primary-Kontakt kann eine Wahl einen neuen Primary bestimmen.",
+          "Ein Arbiter stimmt mit, speichert aber keine Daten.",
+          "Read Preferences: primary, secondary, primaryPreferred, secondaryPreferred, nearest.",
+          "Reads von Secondaries können veraltete Daten liefern."
+        ],
+        "pitfall": "nearest bedeutet minimale Netzwerklatenz, nicht garantiert aktuellste Daten."
+      },
+      {
+        "title": "Write Concern, Read Concern und Transaktionen",
+        "body": "Write Concern bestimmt, wann ein Write bestätigt wird; Read Concern bestimmt, welche Sicht ein Read verlangt. Beide Konzepte sind unabhängig von der Wahl des Read-Ziels.",
+        "bullets": [
+          "Write Concern kann eine Serveranzahl oder majority verlangen; j:true verlangt Journal-Persistenz.",
+          "Read Concern local liest den aktuellen Wert des gewählten Ziels; majority verlangt mehrheitsbestätigte Daten.",
+          "Single-Document-Operationen sind auch ohne explizite Transaktion atomar.",
+          "Multi-Document-ACID-Transaktionen existieren seit MongoDB 4.0, sind aber teurer als passende Dokumentgrenzen."
+        ],
+        "pitfall": "Read Preference und Read Concern beantworten verschiedene Fragen: Wo wird gelesen? Welche Konsistenz/Persistenz muss die gelesene Version erfüllen?"
+      },
+      {
+        "title": "Sharding",
+        "body": "MongoDB shardet Collections horizontal. Jeder Shard wird selbst als Replica Set betrieben.",
+        "bullets": [
+          "Ein Cluster enthält mindestens zwei Shards, einen oder mehrere mongos Query Router und Config Server als Replica Set.",
+          "Der mongos routet Client-Anfragen zu den zuständigen Shards.",
+          "Der Shard Key muss in jedem Dokument der zu shardenden Collection existieren.",
+          "Die Wahl des Shard Keys beeinflusst Lastverteilung, Datenlokalität und Range Queries."
+        ]
+      },
+      {
+        "title": "MongoDB CRUD und Indizes",
+        "body": "Die Prüfung kann Befehle lesen oder vervollständigen lassen. Entscheidend ist, Query-Dokument, Projektion und Update-Operator sauber zu trennen.",
+        "bullets": [
+          "find(query, projection) filtert und projiziert; findOne liefert das erste passende Dokument.",
+          "Vergleiche: $lt, $lte, $gt, $gte, $eq, $ne; Logik: $and, $or, $not.",
+          "$set setzt Felder, $unset entfernt sie, $inc addiert und $mul multipliziert.",
+          "updateOne/updateMany und deleteOne/deleteMany unterscheiden Einzel- und Mengenoperationen.",
+          "createIndex({field: 1}) erzeugt einen aufsteigenden Index; -1 bedeutet absteigend."
+        ],
+        "example": "db.books.find({price: {$gte: 10, $lte: 20}}, {title: true, _id: false})",
+        "pitfall": "Eine leere Query {} bedeutet alle Dokumente. Bei updateMany({}, ...) oder deleteMany({}) wirkt die Operation auf die gesamte Collection."
+      }
+    ],
+    "checklist": [
+      "Ich kann für one-to-few, one-to-thousands und one-to-millions ein passendes Modell wählen.",
+      "Ich kann Redundanz-, Atomaritäts- und Update-Kosten einer Denormalisierung erklären.",
+      "Ich unterscheide Read Preference, Read Concern und Write Concern.",
+      "Ich kenne die Rollen von Primary, Secondary, Arbiter, Shard, mongos und Config Server.",
+      "Ich kann MongoDB-find-, update- und delete-Befehle korrekt lesen.",
+      "Ich erkenne den Unterschied zwischen [] und einem fehlenden Feld."
+    ]
+  },
+  {
+    "id": "graph",
+    "title": "Graphdatenbanken & Cypher",
+    "shortTitle": "Graph",
+    "color": "#d48cff",
+    "deck": "ADBS-Graph.pdf",
+    "pages": "42 Folien",
+    "overview": "Property-Graph-Modell, relationale Transformation und Neo4j-Eigenschaften sowie Cypher von Pattern Matching über variable Pfade bis zu MERGE, Aggregation und Constraints.",
+    "examFocus": [
+      "Cypher-Patterns auswerten",
+      "Pfadlängen exakt lesen",
+      "MATCH/CREATE/MERGE trennen",
+      "Aggregation und WITH verstehen"
+    ],
+    "sections": [
+      {
+        "title": "Property Graph Model",
+        "body": "Graphdatenbanken repräsentieren Entitäten als Knoten und Beziehungen als gerichtete, benannte Kanten. Labels klassifizieren Knoten; Knoten und Beziehungen können Properties tragen.",
+        "bullets": [
+          "Beziehungen sind First-Class Citizens und besitzen Typ, Richtung und optional Properties.",
+          "Eine semantisch symmetrische Beziehung benötigt entweder zwei gerichtete Kanten oder wird in einer Query ungerichtet gematcht.",
+          "Index-free adjacency speichert Nachbarschaft ähnlich wie Zeiger; Traversierungskosten hängen primär vom lokalen Teilgraphen ab.",
+          "Typische Anwendungen: Empfehlungen, Master Data Management, Fraud Detection und soziale Netze."
+        ],
+        "pitfall": "Eine ungerichtete Cypher-Query ändert die gespeicherte Richtung nicht. Sie erlaubt lediglich Matches in beiden Richtungen."
+      },
+      {
+        "title": "Relationales Modell und Graphmodell",
+        "body": "Ein Graph kann relational gespeichert werden, benötigt für Navigation aber häufig viele Joins. Bei der Transformation in einen Property Graph werden technische Schlüssel und Beziehungstabellen meist vereinfacht.",
+        "bullets": [
+          "Entitätstabelle → Node Label; Zeile → Node; Spalte → Node Property.",
+          "Fremdschlüssel → Relationship.",
+          "n:m-Hilfstabelle → Relationship; ihre zusätzlichen Spalten werden Relationship Properties.",
+          "Technische Primärschlüssel können entfallen, fachliche Schlüssel bleiben.",
+          "Denormalisierte Duplikate müssen gegebenenfalls als eigene Knoten herausgezogen werden."
+        ]
+      },
+      {
+        "title": "Neo4j, Konsistenz und Sharding",
+        "body": "Neo4j ist ACID-konform und führt jeden Write in einer Transaktion aus. Clustering verwendet mehrere Primaries und asynchron replizierte Secondaries.",
+        "bullets": [
+          "Eine Cluster-Transaktion benötigt die Bestätigung einer Mehrheit der Primaries.",
+          "Bookmarks ermöglichen kausale Konsistenz beziehungsweise Read-Your-Writes.",
+          "Standard-Isolation ist READ_COMMITTED; Neo4j verwendet Locks.",
+          "Connected Graphs sind schwer zu sharden, weil viele Kanten potenzielle Partitionsgrenzen überschreiten.",
+          "Alternativen sind Application-Level Sharding mit Domänenwissen und Cache Sharding."
+        ]
+      },
+      {
+        "title": "Cypher-Patterns",
+        "body": "Cypher ist deklarativ und basiert auf Pattern Matching. MATCH bindet Variablen; WHERE filtert; RETURN projiziert Ergebnisse.",
+        "bullets": [
+          "() matcht einen beliebigen Knoten, (p:Person) einen Person-Knoten und {name: 'Alice'} Properties.",
+          "[:TYPE] schränkt einen Beziehungstyp ein; [r:TYPE] bindet zusätzlich die Beziehung.",
+          "Mehrere Typen werden mit | angegeben.",
+          "Innerhalb eines einzelnen Patterns darf dieselbe Beziehung nicht zweimal verwendet werden.",
+          "DISTINCT entfernt Duplikate aus der Ergebnismenge."
+        ],
+        "example": "MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) RETURN DISTINCT c.name, a.code",
+        "pitfall": "Anonyme Knoten () sind echte Pattern-Elemente. Sie werden nur nicht an eine Variable gebunden."
+      },
+      {
+        "title": "Variable und kürzeste Pfade",
+        "body": "Variable-Length-Syntax beschreibt die Anzahl der Beziehungen eines Pfadsegments. Pfadvariablen erlauben nodes(p), relationships(p) und length(p).",
+        "bullets": [
+          "*1..3 bedeutet mindestens eine und höchstens drei Beziehungen.",
+          "*2 bedeutet exakt zwei Beziehungen.",
+          "*0..1 schließt den Startknoten als Null-Längen-Pfad ein.",
+          "shortestPath liefert einen kürzesten Pfad pro Match; allShortestPaths alle gleich kurzen kürzesten Pfade.",
+          "Ein unbeschränktes * kann große Suchräume erzeugen."
+        ],
+        "pitfall": "„Höchstens ein Umstieg“ bei Flügen bedeutet ein oder zwei FLIGHT-Kanten, also *1..2, nicht lediglich *..1."
+      },
+      {
+        "title": "CREATE, MERGE, SET und DELETE",
+        "body": "CREATE erzeugt immer neue Muster. MERGE versucht das vollständige angegebene Muster zu matchen und erzeugt es nur bei Fehlschlag.",
+        "bullets": [
+          "MERGE mit zusätzlichen Properties kann einen neuen Knoten erzeugen, obwohl ein Knoten mit gleichem Namen existiert.",
+          "ON CREATE und ON MATCH erlauben unterschiedliche SET-Aktionen.",
+          "SET property = null entfernt die Property; REMOVE ist die explizite Alternative.",
+          "DELETE kann nur beziehungslose Knoten löschen.",
+          "DETACH DELETE löscht einen Knoten mitsamt eingehenden und ausgehenden Beziehungen."
+        ],
+        "pitfall": "MERGE ist nicht automatisch „merge nach Name“. Das gesamte in MERGE angegebene Pattern bestimmt, ob ein Match existiert."
+      },
+      {
+        "title": "Aggregation, WITH und weitere Klauseln",
+        "body": "Nicht aggregierte RETURN- oder WITH-Ausdrücke bilden implizit die Gruppierung. WITH pipelinet Zwischenergebnisse und ist nötig, um Aggregate vor einer weiteren Query-Stufe zu filtern.",
+        "bullets": [
+          "count(*) zählt Ergebniszeilen; count(expr) zählt nur Nicht-NULL-Werte.",
+          "collect(expr) sammelt Werte in einer Liste.",
+          "WITH p, count(*) AS n WHERE n > 5 filtert nach Aggregation.",
+          "ORDER BY und LIMIT sortieren beziehungsweise begrenzen Ergebnisse.",
+          "FOREACH iteriert über Listen oder Pfade, typischerweise für Updates."
+        ],
+        "pitfall": "Ein MATCH mit zwei unabhängigen Beziehungsmustern kann ein kartesisches Produkt erzeugen und Counts vervielfachen. DISTINCT kann dann entscheidend sein."
+      },
+      {
+        "title": "Indizes und Constraints",
+        "body": "Indizes werden für Properties eines Labels definiert. Constraints können Eindeutigkeit, Existenz oder einen Node Key erzwingen.",
+        "bullets": [
+          "Ein Uniqueness Constraint erzeugt implizit einen Index.",
+          "Existence Constraints können Properties auf Knoten oder Beziehungen verlangen.",
+          "Node Key kombiniert Existenz und Eindeutigkeit.",
+          "Einige Constraint-Typen sind editionsabhängig.",
+          "User-definierte Identifier sind case-sensitive, Cypher-Keywords nicht."
+        ]
+      }
+    ],
+    "checklist": [
+      "Ich kann ein Cypher-Pattern inklusive Richtung und Typ ohne Skizze auswerten.",
+      "Ich kann *2, *1..2 und *0..1 exakt unterscheiden.",
+      "Ich kenne den Unterschied zwischen shortestPath und allShortestPaths.",
+      "Ich kann vorhersagen, wann MERGE einen neuen Knoten oder eine neue Kante erzeugt.",
+      "Ich kann Aggregation mit DISTINCT, WITH und COUNT korrekt begründen.",
+      "Ich kann ein relationales n:m-Modell in einen Property Graph transformieren."
+    ]
+  },
+  {
+    "id": "column",
+    "title": "Column & Wide Column Stores",
+    "shortTitle": "Columns",
+    "color": "#ff7ca8",
+    "deck": "ADBS-ColumnStores.pdf",
+    "pages": "44 Folien",
+    "overview": "Spaltenorientierte Ausführung, IDs, Compression und Late Materialization sowie Bigtable als verteilte, versionierte Sparse Map.",
+    "examFocus": [
+      "Kompression passend wählen",
+      "Late-Materialization-Pläne rechnen",
+      "IDs und Positionen verfolgen",
+      "Bigtable-Modell verstehen"
+    ],
+    "sections": [
+      {
+        "title": "Spaltenorientierte Speicherung",
+        "body": "Column Stores speichern vertikale Fragmente statt kompletter Tupel. Analytische Queries lesen oft nur wenige Attribute breiter Tabellen und sparen dadurch I/O.",
+        "bullets": [
+          "Spaltenwerte besitzen ähnliche Typen und oft ähnliche Werte, was Kompression verbessert.",
+          "Vektorisierte Ausführung und SIMD verarbeiten viele Werte einer Spalte mit derselben Operation.",
+          "Cache-Lokalität ist auch ohne SIMD besser als beim Durchlaufen breiter Zeilen.",
+          "Column Stores sind besonders für Analytics und Data Warehouses geeignet, weniger für write-lastige Einzelzeilen-Updates."
+        ]
+      },
+      {
+        "title": "Explizite und virtuelle IDs",
+        "body": "Separat gespeicherte Spalten müssen rekonstruieren können, welche Werte zur gleichen logischen Zeile gehören.",
+        "bullets": [
+          "Explizite IDs speichern zu jedem Spaltenwert eine Tuple-ID, erhöhen aber Datenmenge und I/O.",
+          "Virtuelle IDs verwenden die Position beziehungsweise den Offset als Identität.",
+          "Bei fester Breite erlaubt startOf(C) + i × width(C) direkten Zugriff.",
+          "Variable Breiten und nicht längenerhaltende Kompression erschweren virtuelle IDs."
+        ],
+        "pitfall": "Virtuelle IDs sind nicht generell kostenlos. Sie setzen voraus, dass Positionen stabil und effizient berechenbar bleiben."
+      },
+      {
+        "title": "Kompressionsverfahren",
+        "body": "Die beste Kompression hängt von Verteilung, Wertebereich, Reihenfolge und Datentyp jeder einzelnen Spalte ab.",
+        "bullets": [
+          "Run-Length Encoding speichert (Wert, Anzahl) und profitiert von langen Läufen.",
+          "Bit-Vector Encoding verwendet pro möglichem Wert einen Bitstring und passt zu kleiner Domäne.",
+          "Dictionary Encoding ersetzt lange Werte durch kurze Dictionary-IDs und kann variable Breite fixieren.",
+          "Null Suppression speichert sparse Spalten ohne ihre vielen NULL-Werte.",
+          "Komprimierte Daten können teils direkt verarbeitet werden, etwa SUM über RLE als Wert × Wiederholungen."
+        ],
+        "example": "Rechnungsdatum mit langen gleichen Folgen → RLE; Geburtsmonat mit 12 Ausprägungen → Bit-Vektoren; Adressen → Dictionary.",
+        "pitfall": "Kein Verfahren dominiert immer. RLE, Bitmap und Dictionary können je nach Daten jeweils besser oder schlechter als die anderen sein."
+      },
+      {
+        "title": "Late Materialization",
+        "body": "Materialisierung setzt getrennte Spalten wieder zu Zeilen zusammen. Late Materialization hält Positionen und Einzelspalten so lange wie möglich getrennt.",
+        "bullets": [
+          "Early Materialization ist einfach, verliert aber Kompressions- und Vektorisierungsvorteile.",
+          "Zwischenergebnisse sind häufig Positionslisten oder (Position, Wert)-Paare.",
+          "reconstruct holt Werte einer Spalte nur an bereits qualifizierten Positionen.",
+          "reverse kann (pos, value) zu (value, pos) drehen und so einen Join-Lookup vorbereiten.",
+          "Manche Aggregationen benötigen überhaupt keine vollständige Zeilenrekonstruktion."
+        ],
+        "pitfall": "Nach einem Join müssen Positionen der richtigen Eingabeseite weitergetragen werden. posL und posR sind nicht austauschbar."
+      },
+      {
+        "title": "Updates",
+        "body": "Insert und Delete betreffen mehrere getrennte Spaltendateien. Komprimierte Strukturen müssten im Extremfall dekomprimiert, geändert und erneut komprimiert werden.",
+        "bullets": [
+          "Viele Systeme halten deshalb einen kleinen, updatefreundlichen Write Store neben dem großen Read Store.",
+          "Queries laufen auf beiden Stores und vereinigen die Resultate.",
+          "Updates werden periodisch in den Read Store übernommen.",
+          "Der Ansatz verschiebt Kosten von einzelnen Writes in gebündelte Reorganisation."
+        ]
+      },
+      {
+        "title": "Bigtable: Datenmodell",
+        "body": "Bigtable ist kein klassischer relationaler Column Store, sondern ein verteilter Wide Column Store: eine persistente, sparse und mehrdimensionale Map.",
+        "bullets": [
+          "Adressierung einer Zelle: Row Key, Column und Timestamp.",
+          "Zeilen sind lexikografisch nach Row Key sortiert; benachbarte Keys werden zu Tablets gruppiert.",
+          "Ein Tablet ist Einheit von Verteilung und Load Balancing und besteht aus SSTables.",
+          "Zugriffe innerhalb einer einzelnen Row sind atomar.",
+          "Column Families müssen vorab angelegt werden; Qualifier innerhalb einer Family können unbegrenzt variieren."
+        ],
+        "formula": "(row key, family:qualifier, timestamp) → value",
+        "pitfall": "Column Family und einzelne Column sind nicht dasselbe. Es wird eine kleine Zahl Families, aber potenziell sehr viele Qualifier empfohlen."
+      },
+      {
+        "title": "Bigtable: Versionen und Zugriff",
+        "body": "Eine Zelle kann mehrere Versionen enthalten, die nach absteigendem Zeitstempel gespeichert werden. Retention wird pro Column Family konfiguriert.",
+        "bullets": [
+          "Timestamps können automatisch oder von der Anwendung vergeben werden.",
+          "Reads können die neuesten K Versionen oder einen Zeitbereich anfordern.",
+          "Garbage Collection kann nur die neuesten K Versionen oder nur jüngere als K Sekunden behalten.",
+          "Reads: einzelne Rows und Row Ranges; Writes: einzelne oder Batch Writes, idealerweise für benachbarte Rows.",
+          "MapReduce kann Bigtable-Daten lesen und schreiben."
+        ]
+      },
+      {
+        "title": "Infrastruktur und Systeme",
+        "body": "Bigtable baut auf GFS, SSTables und Chubby auf. HBase und Cassandra teilen Teile des Wide-Column-Gedankens, besitzen aber unterschiedliche Architektur- und Konsistenzentscheidungen.",
+        "bullets": [
+          "GFS speichert Log- und Datendateien.",
+          "SSTables sind unveränderliche, sortierte Key-Value-Dateien mit Blockindex.",
+          "Chubby ist ein hochverfügbarer verteilter Lock Service und Einstiegspunkt.",
+          "HBase ist master-basiert, API-orientiert und wird als PC/EC eingeordnet.",
+          "Cassandra ist masterless, bietet CQL und wird als PA/EL eingeordnet."
+        ]
+      }
+    ],
+    "checklist": [
+      "Ich kann für gegebene Daten begründen, welches Kompressionsverfahren wahrscheinlich passt.",
+      "Ich kann einen Late-Materialization-Plan mit Positionslisten vollständig ausrechnen.",
+      "Ich kann explizite und virtuelle IDs samt Nachteilen vergleichen.",
+      "Ich kann Column Store und Wide Column Store unterscheiden.",
+      "Ich kenne Bigtable Row Keys, Tablets, Column Families, Qualifier und Versionen.",
+      "Ich kann erklären, warum Updates in Column Stores teuer sind."
+    ]
+  }
+]

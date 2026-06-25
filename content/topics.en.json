@@ -1,0 +1,72 @@
+[
+  {
+    "id": "nosql",
+    "title": "NoSQL & Distributed Consistency",
+    "shortTitle": "NoSQL",
+    "overview": "Why NoSQL systems emerged, how aggregate orientation shapes data modelling, and which guarantees CAP, PACELC, quorums and logical clocks actually provide.",
+    "examFocus": ["Separate CAP from PACELC", "Check quorum inequalities", "Compute Lamport and vector clocks", "Distinguish consistency guarantees"],
+    "sections": [
+      {"title":"Core motivation","body":"NoSQL systems optimize for data volume, flexible structure, scale-out and application-specific data models. They trade parts of the relational comfort zone for simpler distribution and faster access patterns.","bullets":["NoSQL means Not only SQL, not no SQL at all.","Schemaless usually means schema-on-read and implicit schema in application code.","Aggregates are common units of access, update and distribution.","Relationships across aggregate boundaries are often represented by IDs."]},
+      {"title":"Distribution and consistency","body":"Sharding distributes different data; replication stores copies. Primary-secondary favors controlled writes, peer-to-peer favors write availability but creates conflict handling problems.","bullets":["Eventual consistency promises convergence only if no more updates occur.","Causal consistency preserves order of causally related operations.","BASE means Basically Available, Soft State, Eventual Consistency.","Session guarantees include read-your-writes and monotonic reads."]},
+      {"title":"CAP, PACELC and quorums","body":"CAP's practical question is AP versus CP during a partition. PACELC adds the normal-case trade-off between latency and consistency.","bullets":["CAP availability requires every request to a non-failing node to receive a response.","Quorum consensus requires 2W>N and R+W>N.","ROWA is R=1 and W=N.","Version stamps are still needed to identify the newest version."]},
+      {"title":"Logical clocks","body":"Lamport clocks preserve causality in one direction; vector clocks can detect causality and concurrency exactly.","bullets":["Lamport receive: max(local, received)+1.","Vector receive: component-wise maximum, then increment receiver component.","Scalar clocks satisfy only the weak clock property.","Vector clocks satisfy the strong clock property."]}
+    ],
+    "checklist": ["I can test R/W/N quorum configurations.", "I can compute Lamport and vector clocks.", "I can explain AP, CP and PACELC labels.", "I can recognize concurrent vector clocks."]
+  },
+  {
+    "id": "key-value",
+    "title": "Key-Value Stores",
+    "shortTitle": "Key-Value",
+    "overview": "Point-lookups by key, Bitcask's append-only hash table and LSM-trees with memtables, SSTables, Bloom filters and compaction.",
+    "examFocus": ["Trace Bitcask operations", "Know the LSM read path", "Separate flush from compaction", "Compare trade-offs"],
+    "sections": [
+      {"title":"Basic idea","body":"A key-value store stores values under keys and usually leaves value semantics to the application.","bullets":["Typical workloads are key lookups and write-heavy access.","A log-structured file gives fast writes but needs an index for fast reads.","Bitcask combines append-only files with an in-memory keydir.","LSM-trees combine sorted in-memory writes with sorted disk files."]},
+      {"title":"Bitcask","body":"Only one data file is active. Puts, updates and deletes append entries; old versions remain until merging.","bullets":["Keydir maps a key to file, offset, value size and timestamp.","Get needs keydir plus at most one targeted disk read.","Delete appends a tombstone and removes the key from keydir.","Hint files speed up keydir reconstruction."]},
+      {"title":"LSM-trees","body":"Writes enter the mutable memtable and WAL. Flush turns an immutable memtable into an SSTable; compaction reorganizes SSTables.","bullets":["Level 0 may contain overlapping key ranges.","Get searches mutable memtable, immutable memtable and then SSTables from level 0.","Bloom filters have no false negatives.","Compaction reduces read and space amplification at the cost of write amplification."]},
+      {"title":"Trade-offs","body":"Bitcask is simple and strong for point lookups but needs all keys in RAM. LSM-trees scale better for many keys and support range scans, but reads and compaction are more complex.","bullets":["Leveling favors reads and space.","Tiering favors writes.","Tombstones are needed because older values may exist below.","Range scans merge several sorted sources."]}
+    ],
+    "checklist": ["I can update the keydir after put/delete sequences.", "I can describe the LSM get order.", "I know why tombstones are needed.", "I can explain Bloom filter false positives."]
+  },
+  {
+    "id": "document",
+    "title": "Document Stores & MongoDB",
+    "shortTitle": "Documents",
+    "overview": "Document-oriented modelling by access pattern, embedding versus references, denormalization, MongoDB replication, concerns, transactions, sharding and CRUD commands.",
+    "examFocus": ["Choose embedding or references", "Explain denormalization costs", "Separate MongoDB guarantees", "Read CRUD queries"],
+    "sections": [
+      {"title":"Documents and modelling","body":"Document stores understand JSON/XML/BSON structure and can query fields. The model should follow the expected workload.","bullets":["Aim for atomic reads and writes where possible.","One-to-few often fits embedding.","One-to-millions usually needs references.","The BSON document size limit matters."]},
+      {"title":"Denormalization","body":"Denormalization copies data to avoid joins or extra reads. It is attractive when reads dominate writes.","bullets":["Redundancy makes some updates non-atomic across documents.","Denormalizing into the many side can multiply update work.","An empty array is not the same as a missing field.","Indexes and validation are part of the data model."]},
+      {"title":"MongoDB guarantees","body":"Replica sets use a primary and secondaries. Read preference selects where to read; read concern selects the required visibility; write concern selects required acknowledgements.","bullets":["Secondaries may be stale.","An arbiter votes but stores no data.","Single-document operations are atomic.","Multi-document ACID transactions exist but are costlier than good document boundaries."]},
+      {"title":"Sharding and commands","body":"MongoDB shards collections by a shard key and routes requests through mongos.","bullets":["A sharded cluster has shards, mongos routers and config servers.","find(query, projection) separates filter from projection.","$set, $unset, $inc and $mul are update operators.","An empty query {} matches all documents."]}
+    ],
+    "checklist": ["I can justify embedding versus references.", "I can distinguish read concern from read preference.", "I can read MongoDB find and update commands.", "I know the sharded-cluster components."]
+  },
+  {
+    "id": "graph",
+    "title": "Graph Databases & Cypher",
+    "shortTitle": "Graph",
+    "overview": "Property graphs, relational-to-graph transformations, Neo4j properties and Cypher pattern matching from basic MATCH clauses to paths, MERGE and aggregation.",
+    "examFocus": ["Evaluate Cypher patterns", "Read path lengths exactly", "Separate CREATE and MERGE", "Use aggregation and WITH"],
+    "sections": [
+      {"title":"Property graphs","body":"Graph databases store entities as nodes and directed named relationships as first-class data.","bullets":["Nodes have labels; nodes and relationships can have properties.","Relationships have type and direction.","Index-free adjacency makes local traversals efficient.","Connected graphs are hard to shard cleanly."]},
+      {"title":"Modelling","body":"Relational entity tables become labels, rows become nodes, foreign keys become relationships and n:m tables often become relationship types.","bullets":["Technical primary keys can often be removed.","Business keys should remain.","Columns on relationship tables become relationship properties.","Denormalized duplicates may become separate nodes."]},
+      {"title":"Cypher paths","body":"Cypher is declarative and pattern-based. Direction, type and path length matter.","bullets":["*2 means exactly two relationships.","*1..2 means one or two relationships.","*0..1 also allows the start node.","length(p) counts relationships, not nodes."]},
+      {"title":"Updates and aggregation","body":"CREATE always creates; MERGE matches the complete pattern first. Aggregation groups by non-aggregate fields and WITH passes intermediate results forward.","bullets":["MERGE with extra properties may create an unexpected second node.","DELETE requires a relationship-free node; DETACH DELETE removes attached relationships.","count(expr) ignores nulls.","WITH can filter after aggregation."]}
+    ],
+    "checklist": ["I can evaluate directed Cypher patterns.", "I know shortestPath versus allShortestPaths.", "I can predict MERGE behavior.", "I can reason about DISTINCT and count."]
+  },
+  {
+    "id": "column",
+    "title": "Column & Wide Column Stores",
+    "shortTitle": "Columns",
+    "overview": "Column-oriented execution, identifiers, compression, late materialization and Bigtable as a distributed sparse versioned map.",
+    "examFocus": ["Choose compression methods", "Compute late-materialization plans", "Track positions", "Understand Bigtable's model"],
+    "sections": [
+      {"title":"Column stores","body":"Column stores physically store vertical fragments. Analytical queries over few columns of wide tables save I/O and benefit from vectorized processing.","bullets":["Column values are homogeneous and often compress well.","Explicit IDs store tuple identifiers with values.","Virtual IDs use positions or offsets.","Variable width and compression can make virtual IDs hard."]},
+      {"title":"Compression","body":"The right compression depends on data distribution and order.","bullets":["RLE is strong for long runs.","Bit-vector encoding fits small domains.","Dictionary encoding replaces long values with short IDs.","Null suppression helps sparse columns."]},
+      {"title":"Late materialization","body":"Late materialization keeps columns separate as long as possible and carries position lists through filters and joins.","bullets":["Early materialization is simple but loses column-store advantages.","reconstruct fetches values only for qualifying positions.","reverse can prepare a value-to-position join lookup.","Some aggregations need no full tuple reconstruction."]},
+      {"title":"Bigtable","body":"Bigtable is a distributed sparse map addressed by row key, column and timestamp.","bullets":["Rows are sorted lexicographically by key.","Tablets group consecutive rows and are distribution units.","Column families must be created explicitly.","Cell versions are stored by decreasing timestamp."]}
+    ],
+    "checklist": ["I can pick RLE, bitmap, dictionary or null suppression.", "I can compute intermediate position lists.", "I know Bigtable rows, tablets, families and versions.", "I can explain write-store versus read-store."]
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "guest_id": 3,
+    "guest_name": "Bob",
+    "room_id": 1,
+    "nights": 3,
+    "check_in": "2025-10-05",
+    "year": 2025
+  },
+  {
+    "guest_id": 12,
+    "guest_name": "Alice",
+    "room_id": 2,
+    "nights": 7,
+    "check_in": "2024-10-12",
+    "year": 2024
+  },
+  {
+    "guest_id": 15,
+    "guest_name": "Tom",
+    "room_id": 3,
+    "nights": 2,
+    "check_in": "2025-03-20",
+    "year": 2025
+  },
+  {
+    "guest_id": 15,
+    "guest_name": "Tom",
+    "room_id": 3,
+    "nights": 5,
+    "check_in": "2024-09-30",
+    "year": 2024
+  },
+  {
+    "guest_id": 18,
+    "guest_name": "Ben",
+    "room_id": 1,
+    "nights": 10,
+    "check_in": "2025-03-01",
+    "year": 2025
+  }
+]

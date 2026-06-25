@@ -1,0 +1,523 @@
+{
+  "version": 1,
+  "matchVsWhere": {
+    "match": {
+      "de": "MATCH beschreibt die Struktur, die im Graphen existieren muss: Labels, Beziehungstypen, Richtung und verbundene Knoten.",
+      "en": "MATCH describes the structure that must exist in the graph: labels, relationship types, direction, and connected nodes."
+    },
+    "where": {
+      "de": "WHERE ergänzt Bedingungen zu einem MATCH, etwa Vergleiche, String-Prüfungen oder die Existenz weiterer Patterns. WHERE erzeugt selbst keine neuen Variablen.",
+      "en": "WHERE adds predicates to a MATCH, such as comparisons, string checks, or the existence of further patterns. WHERE does not introduce new variables by itself."
+    },
+    "matchExample": "MATCH (person:Person)-[:KNOWS]->(friend:Person)\nRETURN person.name, friend.name",
+    "whereExample": "MATCH (person:Person)-[:KNOWS]->(friend:Person)\nWHERE person.age >= 30 AND friend.city = 'Vienna'\nRETURN person.name, friend.name",
+    "takeaway": {
+      "de": "Merksatz: MATCH beantwortet „Welche Form muss die Verbindung haben?“, WHERE beantwortet „Welche der gefundenen Verbindungen erfüllen zusätzliche Bedingungen?“",
+      "en": "Takeaway: MATCH answers “What shape must the connection have?”, while WHERE answers “Which matching connections satisfy additional conditions?”"
+    }
+  },
+  "setup": {
+    "description": {
+      "de": "Führe dieses Setup nur in einer leeren Übungsdatenbank aus. Alle folgenden Beispiele verwenden Teile dieses Graphen und benötigen keine APOC-Erweiterung.",
+      "en": "Run this setup only in an empty practice database. All examples below use parts of this graph and require no APOC extension."
+    },
+    "query": "CREATE\n  (alice:Person:Actor {name:'Alice', age:29, city:'Vienna'}),\n  (bob:Person:Actor {name:'Bob', age:35, city:'Vienna'}),\n  (carol:Person:Actor {name:'Carol', age:41, city:'Berlin'}),\n  (dave:Person:Director {name:'Dave', age:23, city:'Paris'}),\n  (eve:Person {name:'Eve', age:35, city:'Vienna'}),\n  (alice)-[:KNOWS {since:2020, strength:8}]->(bob),\n  (bob)-[:KNOWS {since:2018, strength:5}]->(carol),\n  (alice)-[:KNOWS {since:2022, strength:3}]->(dave),\n  (dave)-[:KNOWS {since:2021, strength:7}]->(carol),\n  (carol)-[:KNOWS {since:2019, strength:9}]->(eve),\n  (bob)-[:KNOWS {since:2023, strength:4}]->(eve),\n  (eve)-[:KNOWS {since:2024, strength:6}]->(alice),\n  (matrix:Movie {title:'The Matrix', year:1999}),\n  (graphDreams:Movie {title:'Graph Dreams', year:2025}),\n  (dbWars:Movie {title:'Database Wars', year:2024}),\n  (alice)-[:ACTED_IN {role:'Architect'}]->(matrix),\n  (bob)-[:ACTED_IN {role:'Operator'}]->(matrix),\n  (bob)-[:ACTED_IN {role:'Query Master'}]->(graphDreams),\n  (carol)-[:ACTED_IN {role:'Navigator'}]->(graphDreams),\n  (alice)-[:ACTED_IN {role:'Analyst'}]->(dbWars),\n  (carol)-[:ACTED_IN {role:'Engineer'}]->(dbWars),\n  (dave)-[:DIRECTED]->(graphDreams),\n  (vienna:City {name:'Vienna'}),\n  (paris:City {name:'Paris'}),\n  (berlin:City {name:'Berlin'}),\n  (vie:Airport {code:'VIE'}),\n  (cdg:Airport {code:'CDG'}),\n  (ber:Airport {code:'BER'}),\n  (txl:Airport {code:'TXL'}),\n  (vienna)-[:HAS_AIRPORT]->(vie),\n  (paris)-[:HAS_AIRPORT]->(cdg),\n  (berlin)-[:HAS_AIRPORT]->(ber),\n  (berlin)-[:HAS_AIRPORT]->(txl),\n  (vie)-[:FLIGHT {distance:1030, minutes:120}]->(cdg),\n  (cdg)-[:FLIGHT {distance:880, minutes:105}]->(ber),\n  (vie)-[:FLIGHT {distance:520, minutes:75}]->(txl),\n  (txl)-[:FLIGHT {distance:520, minutes:70}]->(vie),\n  (ber)-[:FLIGHT {distance:520, minutes:70}]->(vie),\n  (gBob:Guest {id:3, name:'Bob'}),\n  (gAlice:Guest {id:12, name:'Alice'}),\n  (gTom:Guest {id:15, name:'Tom'}),\n  (gBen:Guest {id:18, name:'Ben'}),\n  (single:Room {id:1, type:'Single', price:89}),\n  (double:Room {id:2, type:'Double', price:149}),\n  (suite:Room {id:3, type:'Suite', price:299}),\n  (gBob)-[:BOOKED {nights:3, checkIn:date('2025-10-05'), year:2025}]->(single),\n  (gAlice)-[:BOOKED {nights:7, checkIn:date('2024-10-12'), year:2024}]->(double),\n  (gTom)-[:BOOKED {nights:2, checkIn:date('2025-03-20'), year:2025}]->(suite),\n  (gTom)-[:BOOKED {nights:5, checkIn:date('2024-09-30'), year:2024}]->(suite),\n  (gBen)-[:BOOKED {nights:10, checkIn:date('2025-03-01'), year:2025}]->(single);"
+  },
+  "examples": [
+    {
+      "id": "C01",
+      "difficulty": 1,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Alle Knoten finden", "en": "Find all nodes"},
+      "question": {"de": "Wie sieht das allgemeinste mögliche Knoten-Pattern aus?", "en": "What is the most general node pattern?"},
+      "query": "MATCH (n)\nRETURN n",
+      "explanation": {"de": "(n) matcht jeden Knoten und bindet ihn an n. Ohne Label oder Properties gibt es keine Einschränkung.", "en": "(n) matches every node and binds it to n. Without a label or properties, there is no restriction."},
+      "expectedResult": {"de": "Eine Zeile pro Knoten im gesamten Graphen.", "en": "One row per node in the entire graph."},
+      "pitfall": {"de": "Auf großen Graphen ist diese Query teuer und für fachliche Abfragen meist zu unspezifisch.", "en": "On large graphs, this query is expensive and usually too unspecific for domain queries."}
+    },
+    {
+      "id": "C02",
+      "difficulty": 1,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Knoten über ein Label einschränken", "en": "Restrict nodes by label"},
+      "question": {"de": "Wie werden ausschließlich Personen gefunden?", "en": "How are only people found?"},
+      "query": "MATCH (person:Person)\nRETURN person.name AS name",
+      "explanation": {"de": ":Person ist ein Labeltest innerhalb des Patterns. person ist die Variable für jeden passenden Knoten.", "en": ":Person is a label test inside the pattern. person is the variable for each matching node."},
+      "expectedResult": {"de": "Alice, Bob, Carol, Dave und Eve.", "en": "Alice, Bob, Carol, Dave, and Eve."}
+    },
+    {
+      "id": "C03",
+      "difficulty": 1,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Property direkt im MATCH", "en": "Property directly in MATCH"},
+      "question": {"de": "Wie wird genau der Person-Knoten mit dem Namen Alice gebunden?", "en": "How is the Person node named Alice bound?"},
+      "query": "MATCH (person:Person {name:'Alice'})\nRETURN person",
+      "alternative": "MATCH (person:Person)\nWHERE person.name = 'Alice'\nRETURN person",
+      "explanation": {"de": "Bei einfacher Gleichheit sind Property-Map im MATCH und Gleichheitsbedingung im WHERE semantisch gleichwertig. MATCH beschreibt den Knoten; WHERE formuliert den Wertvergleich separat.", "en": "For simple equality, a property map in MATCH and an equality predicate in WHERE are semantically equivalent. MATCH describes the node; WHERE states the value comparison separately."},
+      "expectedResult": {"de": "Der Alice-Knoten.", "en": "The Alice node."}
+    },
+    {
+      "id": "C04",
+      "difficulty": 1,
+      "category": "MATCH & WHERE",
+      "title": {"de": "MATCH und WHERE zusammen", "en": "MATCH and WHERE together"},
+      "question": {"de": "Finde Personen ab 30 Jahren in Vienna.", "en": "Find people aged 30 or older in Vienna."},
+      "query": "MATCH (person:Person)\nWHERE person.age >= 30 AND person.city = 'Vienna'\nRETURN person.name, person.age\nORDER BY person.name",
+      "explanation": {"de": "MATCH bestimmt die Kandidatenstruktur Person. WHERE verwirft danach alle Kandidaten, deren Werte die Bedingungen nicht erfüllen.", "en": "MATCH determines the Person candidate structure. WHERE removes candidates whose values do not satisfy the predicates."},
+      "expectedResult": {"de": "Bob und Eve, jeweils mit age 35.", "en": "Bob and Eve, each aged 35."}
+    },
+    {
+      "id": "C05",
+      "difficulty": 1,
+      "category": "Projection",
+      "title": {"de": "Properties projizieren und benennen", "en": "Project and alias properties"},
+      "question": {"de": "Wie werden statt ganzer Knoten nur Name und Alter ausgegeben?", "en": "How are only name and age returned instead of complete nodes?"},
+      "query": "MATCH (person:Person)\nRETURN person.name AS personName,\n       person.age AS age",
+      "explanation": {"de": "RETURN legt die Ergebnis-Spalten fest. AS benennt Ausdrücke für lesbare Spaltenüberschriften.", "en": "RETURN defines the result columns. AS gives expressions readable column names."},
+      "expectedResult": {"de": "Eine Tabelle mit personName und age.", "en": "A table with personName and age columns."}
+    },
+    {
+      "id": "C06",
+      "difficulty": 1,
+      "category": "Patterns",
+      "title": {"de": "Gerichtete Beziehung matchen", "en": "Match a directed relationship"},
+      "question": {"de": "Welche Personen kennt Alice über eine ausgehende KNOWS-Beziehung?", "en": "Which people does Alice know through an outgoing KNOWS relationship?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:KNOWS]->(friend:Person)\nRETURN friend.name AS friend",
+      "explanation": {"de": "Der Pfeil verlangt eine gespeicherte Richtung von Alice zum friend. Der Alice-Knoten bleibt anonym, weil er später nicht benötigt wird.", "en": "The arrow requires a stored direction from Alice to friend. The Alice node is anonymous because it is not needed later."},
+      "expectedResult": {"de": "Bob und Dave.", "en": "Bob and Dave."}
+    },
+    {
+      "id": "C07",
+      "difficulty": 1,
+      "category": "Patterns",
+      "title": {"de": "Beziehung an Variable binden", "en": "Bind a relationship to a variable"},
+      "question": {"de": "Wie werden Properties einer Beziehung gelesen?", "en": "How are relationship properties read?"},
+      "query": "MATCH (:Person {name:'Alice'})-[knows:KNOWS]->(friend:Person)\nRETURN friend.name, knows.since, knows.strength",
+      "explanation": {"de": "[knows:KNOWS] bindet die konkrete Kante an knows. Dadurch können since und strength aus der Beziehung projiziert werden.", "en": "[knows:KNOWS] binds the concrete edge to knows, allowing since and strength to be projected from the relationship."},
+      "expectedResult": {"de": "Bob mit 2020/8 und Dave mit 2022/3.", "en": "Bob with 2020/8 and Dave with 2022/3."}
+    },
+    {
+      "id": "C08",
+      "difficulty": 1,
+      "category": "Patterns",
+      "title": {"de": "Richtung beim Lesen ignorieren", "en": "Ignore direction while reading"},
+      "question": {"de": "Welche Personen sind unabhängig von der gespeicherten Richtung direkt mit Alice verbunden?", "en": "Which people are directly connected to Alice regardless of stored direction?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:KNOWS]-(person:Person)\nRETURN person.name",
+      "explanation": {"de": "Ohne Pfeil matcht Cypher KNOWS-Kanten in beiden Richtungen. Das verändert die gespeicherte Kante nicht.", "en": "Without an arrow, Cypher matches KNOWS edges in both directions. This does not change the stored relationship."},
+      "expectedResult": {"de": "Bob, Dave und Eve.", "en": "Bob, Dave, and Eve."},
+      "pitfall": {"de": "Eine ungerichtete Query bedeutet nicht, dass die Beziehung im Datenmodell ungerichtet gespeichert ist.", "en": "An undirected query does not mean the relationship is stored as undirected."}
+    },
+    {
+      "id": "C09",
+      "difficulty": 1,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Beziehungs-Property filtern", "en": "Filter a relationship property"},
+      "question": {"de": "Finde direkte Bekanntschaften von Alice mit strength mindestens 5.", "en": "Find Alice's direct acquaintances with strength at least 5."},
+      "query": "MATCH (:Person {name:'Alice'})-[knows:KNOWS]->(friend:Person)\nWHERE knows.strength >= 5\nRETURN friend.name, knows.strength",
+      "explanation": {"de": "MATCH bindet friend und knows. WHERE kann anschließend sowohl Knoten- als auch Beziehungs-Properties prüfen.", "en": "MATCH binds friend and knows. WHERE can then inspect both node and relationship properties."},
+      "expectedResult": {"de": "Nur Bob mit strength 8.", "en": "Only Bob with strength 8."}
+    },
+    {
+      "id": "C10",
+      "difficulty": 1,
+      "category": "Projection",
+      "title": {"de": "Sortieren und begrenzen", "en": "Sort and limit"},
+      "question": {"de": "Zeige die drei ältesten Personen.", "en": "Show the three oldest people."},
+      "query": "MATCH (person:Person)\nRETURN person.name, person.age\nORDER BY person.age DESC, person.name ASC\nLIMIT 3",
+      "explanation": {"de": "ORDER BY sortiert zuerst absteigend nach Alter und löst Gleichstände alphabetisch. LIMIT wird auf die sortierten Zeilen angewendet.", "en": "ORDER BY sorts by descending age and resolves ties alphabetically. LIMIT is applied to the sorted rows."},
+      "expectedResult": {"de": "Carol, Bob und Eve.", "en": "Carol, Bob, and Eve."}
+    },
+    {
+      "id": "C11",
+      "difficulty": 2,
+      "category": "MATCH & WHERE",
+      "title": {"de": "String-Prädikate", "en": "String predicates"},
+      "question": {"de": "Finde Namen, die mit A beginnen oder den Buchstaben o enthalten.", "en": "Find names starting with A or containing the letter o."},
+      "query": "MATCH (person:Person)\nWHERE person.name STARTS WITH 'A'\n   OR person.name CONTAINS 'o'\nRETURN person.name",
+      "explanation": {"de": "STARTS WITH und CONTAINS sind String-Prädikate. Die OR-Verknüpfung akzeptiert Personen, für die mindestens eine Bedingung gilt.", "en": "STARTS WITH and CONTAINS are string predicates. OR accepts people satisfying at least one condition."},
+      "expectedResult": {"de": "Alice, Bob und Carol.", "en": "Alice, Bob, and Carol."}
+    },
+    {
+      "id": "C12",
+      "difficulty": 2,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Bereich und IN-Liste", "en": "Range and IN list"},
+      "question": {"de": "Finde Personen zwischen 25 und 40 Jahren aus Vienna oder Berlin.", "en": "Find people aged 25 through 40 from Vienna or Berlin."},
+      "query": "MATCH (person:Person)\nWHERE 25 <= person.age <= 40\n  AND person.city IN ['Vienna', 'Berlin']\nRETURN person.name, person.city, person.age",
+      "explanation": {"de": "Cypher erlaubt verkettete Bereichsvergleiche. IN prüft die Zugehörigkeit zu einer Liste.", "en": "Cypher supports chained range comparisons. IN checks membership in a list."},
+      "expectedResult": {"de": "Alice, Bob und Eve.", "en": "Alice, Bob, and Eve."}
+    },
+    {
+      "id": "C13",
+      "difficulty": 2,
+      "category": "MATCH & WHERE",
+      "title": {"de": "Fehlende Properties und null", "en": "Missing properties and null"},
+      "question": {"de": "Finde Personen ohne email-Property.", "en": "Find people without an email property."},
+      "query": "MATCH (person:Person)\nWHERE person.email IS NULL\nRETURN person.name",
+      "explanation": {"de": "Eine fehlende Property ergibt null. Deshalb wird mit IS NULL statt = null geprüft.", "en": "A missing property evaluates to null. Therefore IS NULL is used instead of = null."},
+      "expectedResult": {"de": "Im Beispielgraphen alle Personen.", "en": "All people in the example graph."},
+      "pitfall": {"de": "Vergleiche wie person.email = null liefern nicht true; null wird mit IS NULL oder IS NOT NULL geprüft.", "en": "Comparisons such as person.email = null do not yield true; test null with IS NULL or IS NOT NULL."}
+    },
+    {
+      "id": "C14",
+      "difficulty": 2,
+      "category": "Projection",
+      "title": {"de": "Duplikate mit DISTINCT entfernen", "en": "Remove duplicates with DISTINCT"},
+      "question": {"de": "Welche Personen haben mindestens in einem Film gespielt, unabhängig von der Zahl ihrer Rollen?", "en": "Which people acted in at least one movie, regardless of role count?"},
+      "query": "MATCH (actor:Person)-[:ACTED_IN]->(:Movie)\nRETURN DISTINCT actor.name AS actor",
+      "explanation": {"de": "MATCH erzeugt eine Zeile pro ACTED_IN-Kante. DISTINCT reduziert mehrere Rollen derselben Person auf einen Namen.", "en": "MATCH creates one row per ACTED_IN edge. DISTINCT reduces multiple roles by the same person to one name."},
+      "expectedResult": {"de": "Alice, Bob und Carol jeweils einmal.", "en": "Alice, Bob, and Carol once each."}
+    },
+    {
+      "id": "C15",
+      "difficulty": 2,
+      "category": "Projection",
+      "title": {"de": "Paginierung mit SKIP und LIMIT", "en": "Pagination with SKIP and LIMIT"},
+      "question": {"de": "Zeige die zweite Seite einer alphabetischen Personenliste mit zwei Einträgen pro Seite.", "en": "Show the second page of an alphabetical person list with two entries per page."},
+      "query": "MATCH (person:Person)\nRETURN person.name\nORDER BY person.name\nSKIP 2\nLIMIT 2",
+      "explanation": {"de": "Zuerst wird stabil sortiert, dann werden zwei Zeilen übersprungen und zwei ausgegeben.", "en": "Rows are sorted first, then two are skipped and two returned."},
+      "expectedResult": {"de": "Carol und Dave.", "en": "Carol and Dave."}
+    },
+    {
+      "id": "C16",
+      "difficulty": 2,
+      "category": "Patterns",
+      "title": {"de": "Mehrere Beziehungstypen zulassen", "en": "Allow multiple relationship types"},
+      "question": {"de": "Welche Personen sind über ACTED_IN oder DIRECTED mit Graph Dreams verbunden?", "en": "Which people are connected to Graph Dreams through ACTED_IN or DIRECTED?"},
+      "query": "MATCH (person:Person)-[:ACTED_IN|DIRECTED]->(:Movie {title:'Graph Dreams'})\nRETURN person.name, labels(person)",
+      "explanation": {"de": "Der senkrechte Strich bedeutet OR zwischen Beziehungstypen. Eine konkrete Beziehung besitzt trotzdem genau einen Typ.", "en": "The vertical bar means OR between relationship types. A concrete relationship still has exactly one type."},
+      "expectedResult": {"de": "Bob, Carol und Dave.", "en": "Bob, Carol, and Dave."}
+    },
+    {
+      "id": "C17",
+      "difficulty": 2,
+      "category": "Patterns",
+      "title": {"de": "Zwei MATCH-Klauseln verketten", "en": "Chain two MATCH clauses"},
+      "question": {"de": "Finde Regisseure von Filmen, in denen Bob gespielt hat.", "en": "Find directors of movies Bob acted in."},
+      "query": "MATCH (:Person {name:'Bob'})-[:ACTED_IN]->(movie:Movie)\nMATCH (director:Person)-[:DIRECTED]->(movie)\nRETURN director.name, movie.title",
+      "explanation": {"de": "Die erste Klausel bindet movie. Die zweite verwendet genau diese Movie-Werte als Ausgangspunkt für ein weiteres Pattern.", "en": "The first clause binds movie. The second uses those exact Movie values as input for another pattern."},
+      "expectedResult": {"de": "Dave und Graph Dreams.", "en": "Dave and Graph Dreams."}
+    },
+    {
+      "id": "C18",
+      "difficulty": 2,
+      "category": "Patterns",
+      "title": {"de": "OPTIONAL MATCH wie ein Left Join", "en": "OPTIONAL MATCH like a left join"},
+      "question": {"de": "Zeige jede Person und optional einen Film, den sie inszeniert hat.", "en": "Show every person and optionally a movie they directed."},
+      "query": "MATCH (person:Person)\nOPTIONAL MATCH (person)-[:DIRECTED]->(movie:Movie)\nRETURN person.name, movie.title",
+      "explanation": {"de": "Die erste MATCH-Zeile bleibt erhalten, auch wenn das optionale Pattern fehlt. movie.title ist dann null.", "en": "The first MATCH row is preserved even when the optional pattern is missing. movie.title is then null."},
+      "expectedResult": {"de": "Alle fünf Personen; nur Dave hat Graph Dreams, die anderen erhalten null.", "en": "All five people; only Dave has Graph Dreams, while the others receive null."}
+    },
+    {
+      "id": "C19",
+      "difficulty": 2,
+      "category": "Patterns",
+      "title": {"de": "WHERE bei OPTIONAL MATCH richtig platzieren", "en": "Place WHERE correctly with OPTIONAL MATCH"},
+      "question": {"de": "Zeige jede Person und optional einen von ihr inszenierten Film aus 2025.", "en": "Show every person and optionally a movie from 2025 that they directed."},
+      "query": "MATCH (person:Person)\nOPTIONAL MATCH (person)-[:DIRECTED]->(movie:Movie)\nWHERE movie.year = 2025\nRETURN person.name, movie.title",
+      "alternative": "MATCH (person:Person)\nOPTIONAL MATCH (person)-[:DIRECTED]->(movie:Movie)\nWITH person, movie\nWHERE movie.year = 2025\nRETURN person.name, movie.title",
+      "explanation": {"de": "Im ersten Query gehört WHERE zum OPTIONAL MATCH: Personen bleiben erhalten, wenn kein passender 2025-Film existiert. Im alternativen Query filtert WHERE nach WITH die null-Zeilen heraus und lässt praktisch nur Dave übrig.", "en": "In the first query, WHERE belongs to OPTIONAL MATCH: people remain even if no 2025 movie matches. In the alternative, WHERE after WITH removes null rows and effectively leaves only Dave."},
+      "expectedResult": {"de": "Erste Query: alle Personen, Dave mit Graph Dreams. Alternative: nur Dave.", "en": "First query: all people, with Graph Dreams for Dave. Alternative: only Dave."},
+      "pitfall": {"de": "WHERE ist bei OPTIONAL MATCH Teil des optionalen Patterns; seine Position verändert die Semantik stark.", "en": "With OPTIONAL MATCH, WHERE belongs to the optional pattern; its placement strongly changes semantics."}
+    },
+    {
+      "id": "C20",
+      "difficulty": 2,
+      "category": "Aggregation",
+      "title": {"de": "Beziehungen zählen", "en": "Count relationships"},
+      "question": {"de": "Wie viele ausgehende KNOWS-Beziehungen hat jede Person mit mindestens einer solchen Kante?", "en": "How many outgoing KNOWS relationships does each person with at least one such edge have?"},
+      "query": "MATCH (person:Person)-[:KNOWS]->(:Person)\nRETURN person.name, count(*) AS outgoing\nORDER BY outgoing DESC, person.name",
+      "explanation": {"de": "person.name ist der nicht aggregierte Ausdruck und bildet damit die Gruppierung. count(*) zählt Ergebniszeilen pro Person.", "en": "person.name is the non-aggregated expression and therefore forms the grouping. count(*) counts result rows per person."},
+      "expectedResult": {"de": "Alice und Bob je 2; Carol, Dave und Eve je 1.", "en": "Alice and Bob have 2 each; Carol, Dave, and Eve have 1 each."}
+    },
+    {
+      "id": "C21",
+      "difficulty": 2,
+      "category": "Aggregation",
+      "title": {"de": "count(*) und count(property)", "en": "count(*) and count(property)"},
+      "question": {"de": "Wie unterscheiden sich Zeilenzahl und Zahl vorhandener email-Werte?", "en": "How do row count and count of present email values differ?"},
+      "query": "MATCH (person:Person)\nRETURN count(*) AS people,\n       count(person.email) AS emails",
+      "explanation": {"de": "count(*) zählt jede Zeile. count(person.email) ignoriert null und zählt daher nur vorhandene email-Properties.", "en": "count(*) counts every row. count(person.email) ignores null and therefore counts only present email properties."},
+      "expectedResult": {"de": "people = 5 und emails = 0.", "en": "people = 5 and emails = 0."}
+    },
+    {
+      "id": "C22",
+      "difficulty": 2,
+      "category": "Aggregation",
+      "title": {"de": "Werte mit collect sammeln", "en": "Collect values into a list"},
+      "question": {"de": "Liste pro Film alle Schauspielenden als alphabetische Liste.", "en": "List all actors per movie as an alphabetical list."},
+      "query": "MATCH (actor:Person)-[:ACTED_IN]->(movie:Movie)\nWITH movie, actor\nORDER BY actor.name\nRETURN movie.title,\n       collect(actor.name) AS actors\nORDER BY movie.title",
+      "explanation": {"de": "WITH sortiert die Zeilen vor der Aggregation. collect fasst die Namen je movie zu einer Liste zusammen.", "en": "WITH sorts rows before aggregation. collect groups actor names into one list per movie."},
+      "expectedResult": {"de": "Je Film eine Zeile mit einer Namensliste.", "en": "One row per movie with a list of names."}
+    },
+    {
+      "id": "C23",
+      "difficulty": 3,
+      "category": "Aggregation",
+      "title": {"de": "Hotelumsatz pro Zimmer", "en": "Hotel revenue per room"},
+      "question": {"de": "Berechne pro Zimmer den Umsatz aller Buchungen aus nights × price.", "en": "Compute revenue per room from all bookings as nights × price."},
+      "query": "MATCH (:Guest)-[booking:BOOKED]->(room:Room)\nRETURN room.id,\n       room.type,\n       sum(booking.nights * room.price) AS revenue\nORDER BY revenue DESC",
+      "explanation": {"de": "Der Ausdruck wird pro BOOKED-Kante berechnet und sum aggregiert ihn innerhalb der durch room.id und room.type gebildeten Gruppen.", "en": "The expression is calculated per BOOKED edge, and sum aggregates it within groups formed by room.id and room.type."},
+      "expectedResult": {"de": "Suite 2093, Single 1157, Double 1043.", "en": "Suite 2093, Single 1157, Double 1043."}
+    },
+    {
+      "id": "C24",
+      "difficulty": 3,
+      "category": "Aggregation",
+      "title": {"de": "Nach einer Aggregation filtern", "en": "Filter after aggregation"},
+      "question": {"de": "Finde Gäste mit insgesamt mindestens fünf gebuchten Nächten.", "en": "Find guests with at least five booked nights in total."},
+      "query": "MATCH (guest:Guest)-[booking:BOOKED]->(:Room)\nWITH guest, sum(booking.nights) AS totalNights\nWHERE totalNights >= 5\nRETURN guest.name, totalNights\nORDER BY totalNights DESC",
+      "explanation": {"de": "WITH berechnet totalNights und bildet eine neue Pipeline-Stufe. Erst danach kann WHERE den Alias des Aggregats filtern.", "en": "WITH calculates totalNights and creates a new pipeline stage. Only then can WHERE filter the aggregate alias."},
+      "expectedResult": {"de": "Ben 10, Tom 7 und Alice 7.", "en": "Ben 10, Tom 7, and Alice 7."}
+    },
+    {
+      "id": "C25",
+      "difficulty": 3,
+      "category": "Aggregation",
+      "title": {"de": "DISTINCT innerhalb einer Aggregation", "en": "DISTINCT inside an aggregation"},
+      "question": {"de": "Wie viele verschiedene Gäste hatte jedes Zimmer?", "en": "How many distinct guests did each room have?"},
+      "query": "MATCH (guest:Guest)-[:BOOKED]->(room:Room)\nRETURN room.id,\n       count(DISTINCT guest) AS distinctGuests,\n       count(*) AS bookings\nORDER BY room.id",
+      "explanation": {"de": "Tom besitzt zwei BOOKED-Kanten zum Suite-Zimmer. count(*) zählt beide Buchungen, count(DISTINCT guest) Tom aber nur einmal.", "en": "Tom has two BOOKED edges to the suite. count(*) counts both bookings, while count(DISTINCT guest) counts Tom only once."},
+      "expectedResult": {"de": "Zimmer 3: ein verschiedener Gast, aber zwei Buchungen.", "en": "Room 3: one distinct guest but two bookings."}
+    },
+    {
+      "id": "C26",
+      "difficulty": 3,
+      "category": "Projection",
+      "title": {"de": "CASE für abgeleitete Kategorien", "en": "CASE for derived categories"},
+      "question": {"de": "Ordne Zimmer in Budget, Standard und Premium ein.", "en": "Classify rooms as Budget, Standard, or Premium."},
+      "query": "MATCH (room:Room)\nRETURN room.type,\n       room.price,\n       CASE\n         WHEN room.price < 100 THEN 'Budget'\n         WHEN room.price < 200 THEN 'Standard'\n         ELSE 'Premium'\n       END AS segment",
+      "explanation": {"de": "CASE erzeugt einen berechneten Wert pro Ergebniszeile. Die erste zutreffende WHEN-Bedingung gewinnt.", "en": "CASE creates a calculated value per result row. The first matching WHEN condition wins."},
+      "expectedResult": {"de": "Single Budget, Double Standard, Suite Premium.", "en": "Single Budget, Double Standard, Suite Premium."}
+    },
+    {
+      "id": "C27",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Knoten und Beziehung mit CREATE erzeugen", "en": "Create nodes and a relationship"},
+      "question": {"de": "Wie wird eine neue Person erzeugt und mit Alice verbunden?", "en": "How is a new person created and connected to Alice?"},
+      "query": "MATCH (alice:Person {name:'Alice'})\nCREATE (frank:Person {name:'Frank', age:31, city:'Graz'})\nCREATE (alice)-[:KNOWS {since:2026, strength:5}]->(frank)\nRETURN alice, frank",
+      "explanation": {"de": "MATCH findet den vorhandenen Startknoten. CREATE erzeugt bei jedem Lauf einen neuen Frank-Knoten und eine neue Kante.", "en": "MATCH finds the existing start node. CREATE creates a new Frank node and relationship on every execution."},
+      "expectedResult": {"de": "Ein neuer Frank und eine KNOWS-Kante von Alice.", "en": "A new Frank and a KNOWS edge from Alice."},
+      "pitfall": {"de": "Erneutes Ausführen erzeugt Duplikate, weil CREATE nie nach vorhandenen Mustern sucht.", "en": "Re-running creates duplicates because CREATE never checks for existing patterns."}
+    },
+    {
+      "id": "C28",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Sicheres MERGE über einen stabilen Schlüssel", "en": "Safe MERGE using a stable key"},
+      "question": {"de": "Wie wird Frank nur bei Bedarf erzeugt und danach aktualisiert?", "en": "How is Frank created only when needed and then updated?"},
+      "query": "MERGE (frank:Person {name:'Frank'})\nSET frank.age = 31,\n    frank.city = 'Graz'\nRETURN frank",
+      "explanation": {"de": "MERGE sucht nur nach dem stabilen Identifikator name. Veränderliche Werte werden getrennt mit SET gesetzt.", "en": "MERGE searches only by the stable identifier name. Mutable values are assigned separately with SET."},
+      "expectedResult": {"de": "Höchstens ein gematchter Frank bei eindeutigem Person.name; age und city werden gesetzt.", "en": "At most one matched Frank when Person.name is unique; age and city are set."}
+    },
+    {
+      "id": "C29",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Warum MERGE unerwartete Duplikate erzeugen kann", "en": "Why MERGE can create unexpected duplicates"},
+      "question": {"de": "Was ist der Unterschied zwischen MERGE auf name und MERGE auf name plus age?", "en": "What is the difference between MERGE by name and MERGE by name plus age?"},
+      "query": "MERGE (alice:Person {name:'Alice', age:30})\nRETURN alice",
+      "alternative": "MERGE (alice:Person {name:'Alice'})\nSET alice.age = 30\nRETURN alice",
+      "explanation": {"de": "Im ersten Query gehört age zum vollständigen Match. Der vorhandene Alice-Knoten mit age 29 passt nicht, daher kann ein zweiter Alice-Knoten entstehen. Die Alternative matcht erst stabil nach name.", "en": "In the first query, age belongs to the complete match. Existing Alice with age 29 does not match, so a second Alice may be created. The alternative first matches stably by name."},
+      "expectedResult": {"de": "Erster Query potenziell zweite Alice; Alternative aktualisiert die vorhandene Alice.", "en": "First query may create a second Alice; the alternative updates existing Alice."},
+      "pitfall": {"de": "MERGE bedeutet nicht „finde teilweise und ergänze den Rest“.", "en": "MERGE does not mean “partially match and fill in the rest.”"}
+    },
+    {
+      "id": "C30",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "ON CREATE und ON MATCH", "en": "ON CREATE and ON MATCH"},
+      "question": {"de": "Wie werden Erstellungs- und Änderungszeitpunkt unterschiedlich behandelt?", "en": "How are creation and update timestamps handled differently?"},
+      "query": "MERGE (person:Person {name:'Frank'})\nON CREATE SET person.createdAt = datetime()\nON MATCH SET person.lastSeenAt = datetime()\nRETURN person",
+      "explanation": {"de": "ON CREATE läuft nur beim tatsächlichen Erzeugen. ON MATCH läuft nur, wenn MERGE bereits einen passenden Knoten findet.", "en": "ON CREATE runs only when a node is actually created. ON MATCH runs only when MERGE finds an existing node."},
+      "expectedResult": {"de": "Beim ersten Lauf createdAt, bei späteren Läufen lastSeenAt.", "en": "createdAt on the first run and lastSeenAt on later runs."}
+    },
+    {
+      "id": "C31",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Properties und Labels ändern", "en": "Change properties and labels"},
+      "question": {"de": "Wie erhält Eve ein VIP-Label und wie wird ihre city-Property entfernt?", "en": "How does Eve receive a VIP label and have her city property removed?"},
+      "query": "MATCH (eve:Person {name:'Eve'})\nSET eve:VIP,\n    eve.status = 'active'\nREMOVE eve.city\nRETURN labels(eve), properties(eve)",
+      "explanation": {"de": "SET kann Labels und Properties ergänzen. REMOVE entfernt explizit ein Label oder eine Property.", "en": "SET can add labels and properties. REMOVE explicitly removes a label or property."},
+      "expectedResult": {"de": "Eve trägt Person und VIP, besitzt status active und keine city-Property.", "en": "Eve has Person and VIP labels, status active, and no city property."}
+    },
+    {
+      "id": "C32",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Nur eine Beziehung löschen", "en": "Delete only a relationship"},
+      "question": {"de": "Wie wird die KNOWS-Kante von Alice zu Dave entfernt, ohne Knoten zu löschen?", "en": "How is the KNOWS edge from Alice to Dave removed without deleting nodes?"},
+      "query": "MATCH (:Person {name:'Alice'})-[knows:KNOWS]->(:Person {name:'Dave'})\nDELETE knows",
+      "explanation": {"de": "Die Kante wird an knows gebunden und direkt gelöscht. Alice und Dave bleiben erhalten.", "en": "The edge is bound to knows and deleted directly. Alice and Dave remain."},
+      "expectedResult": {"de": "Nur die konkrete KNOWS-Beziehung verschwindet.", "en": "Only the concrete KNOWS relationship disappears."}
+    },
+    {
+      "id": "C33",
+      "difficulty": 3,
+      "category": "Write",
+      "title": {"de": "Knoten mit Beziehungen löschen", "en": "Delete a node with relationships"},
+      "question": {"de": "Wie wird Eve mitsamt allen ein- und ausgehenden Beziehungen gelöscht?", "en": "How is Eve deleted together with all incoming and outgoing relationships?"},
+      "query": "MATCH (eve:Person {name:'Eve'})\nDETACH DELETE eve",
+      "explanation": {"de": "DELETE eve allein würde wegen bestehender Beziehungen fehlschlagen. DETACH DELETE entfernt zuerst alle verbundenen Kanten.", "en": "DELETE eve alone would fail because relationships exist. DETACH DELETE first removes all connected edges."},
+      "expectedResult": {"de": "Eve und ihre KNOWS-Beziehungen werden entfernt.", "en": "Eve and her KNOWS relationships are removed."},
+      "pitfall": {"de": "DETACH DELETE kann große Teilmengen des Graphen verändern und sollte präzise gematcht werden.", "en": "DETACH DELETE can modify large graph portions and should be matched precisely."}
+    },
+    {
+      "id": "C34",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Pfad mit exakt zwei Beziehungen", "en": "Path with exactly two relationships"},
+      "question": {"de": "Welche Personen erreicht Alice über genau zwei KNOWS-Kanten?", "en": "Which people can Alice reach through exactly two KNOWS edges?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:KNOWS*2]->(person:Person)\nRETURN DISTINCT person.name",
+      "explanation": {"de": "*2 zählt Beziehungen, nicht Zwischenknoten. DISTINCT entfernt Mehrfacherreichbarkeit über verschiedene Pfade.", "en": "*2 counts relationships, not intermediate nodes. DISTINCT removes repeated reachability through different paths."},
+      "expectedResult": {"de": "Carol und Eve.", "en": "Carol and Eve."}
+    },
+    {
+      "id": "C35",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Variable Pfadlänge begrenzen", "en": "Bound a variable-length path"},
+      "question": {"de": "Welche Personen erreicht Alice in ein bis drei KNOWS-Schritten?", "en": "Which people can Alice reach in one to three KNOWS steps?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:KNOWS*1..3]->(person:Person)\nRETURN DISTINCT person.name\nORDER BY person.name",
+      "explanation": {"de": "*1..3 erlaubt Pfadlängen 1, 2 und 3. Die Grenzen sind inklusive.", "en": "*1..3 allows path lengths 1, 2, and 3. Bounds are inclusive."},
+      "expectedResult": {"de": "Alice, Bob, Carol, Dave und Eve. Alice wird über den Drei-Kanten-Zyklus Alice→Bob→Eve→Alice wieder erreicht.", "en": "Alice, Bob, Carol, Dave, and Eve. Alice is reached again through the three-edge cycle Alice→Bob→Eve→Alice."},
+      "pitfall": {"de": "Unbeschränkte variable Pfade können sehr viele mögliche Wege erzeugen.", "en": "Unbounded variable-length paths can generate a very large number of possible routes."}
+    },
+    {
+      "id": "C36",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Pfadvariable und Pfadfunktionen", "en": "Path variable and path functions"},
+      "question": {"de": "Wie werden Knoten, Beziehungen und Länge eines Pfads ausgegeben?", "en": "How are nodes, relationships, and path length returned?"},
+      "query": "MATCH path = (:Person {name:'Alice'})-[:KNOWS*1..2]->(target:Person)\nRETURN target.name,\n       [node IN nodes(path) | node.name] AS people,\n       [rel IN relationships(path) | rel.since] AS sinceValues,\n       length(path) AS hops",
+      "explanation": {"de": "nodes(path) liefert die Knotenfolge, relationships(path) die Kantenfolge und length(path) die Zahl der Kanten.", "en": "nodes(path) returns the node sequence, relationships(path) the edge sequence, and length(path) the number of edges."},
+      "expectedResult": {"de": "Eine Zeile pro passendem Pfad mit lesbarer Knoten- und since-Liste.", "en": "One row per matching path with readable node and since lists."}
+    },
+    {
+      "id": "C37",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Einen kürzesten Pfad finden", "en": "Find one shortest path"},
+      "question": {"de": "Finde einen kürzesten ungerichteten KNOWS-Pfad zwischen Alice und Carol.", "en": "Find one shortest undirected KNOWS path between Alice and Carol."},
+      "query": "MATCH (alice:Person {name:'Alice'}),\n      (carol:Person {name:'Carol'})\nMATCH path = shortestPath((alice)-[:KNOWS*..6]-(carol))\nRETURN [node IN nodes(path) | node.name] AS people,\n       length(path) AS hops",
+      "explanation": {"de": "shortestPath minimiert die Zahl der Beziehungen. Das ungerichtete Pattern erlaubt beide gespeicherten Richtungen.", "en": "shortestPath minimizes the number of relationships. The undirected pattern allows both stored directions."},
+      "expectedResult": {"de": "Ein Zwei-Hop-Pfad, etwa Alice–Bob–Carol oder Alice–Dave–Carol.", "en": "One two-hop path, such as Alice–Bob–Carol or Alice–Dave–Carol."}
+    },
+    {
+      "id": "C38",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Alle gleich kurzen kürzesten Pfade", "en": "All equally short shortest paths"},
+      "question": {"de": "Wie werden alle kürzesten Verbindungen zwischen Alice und Carol gefunden?", "en": "How are all shortest connections between Alice and Carol found?"},
+      "query": "MATCH (alice:Person {name:'Alice'}),\n      (carol:Person {name:'Carol'})\nMATCH path = allShortestPaths((alice)-[:KNOWS*..6]-(carol))\nRETURN [node IN nodes(path) | node.name] AS people,\n       length(path) AS hops",
+      "explanation": {"de": "allShortestPaths liefert jede Alternative mit minimaler Hop-Zahl, nicht längere Wege.", "en": "allShortestPaths returns every alternative with the minimum hop count, not longer routes."},
+      "expectedResult": {"de": "Alice–Bob–Carol, Alice–Dave–Carol und Alice–Eve–Carol, jeweils Länge 2.", "en": "Alice–Bob–Carol, Alice–Dave–Carol, and Alice–Eve–Carol, each length 2."}
+    },
+    {
+      "id": "C39",
+      "difficulty": 4,
+      "category": "Paths",
+      "title": {"de": "Co-Actors über ein Zwei-Kanten-Pattern", "en": "Co-actors through a two-edge pattern"},
+      "question": {"de": "Mit wem hat Alice gemeinsam in einem Film gespielt?", "en": "Who acted in a movie together with Alice?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:ACTED_IN]->(movie:Movie)<-[:ACTED_IN]-(coActor:Person)\nRETURN DISTINCT coActor.name, movie.title\nORDER BY movie.title",
+      "explanation": {"de": "Das Pattern geht von Alice zum Film und über eine andere ACTED_IN-Kante zurück zu einer Person. Relationship Uniqueness verhindert, dass dieselbe Kante hin und zurück verwendet wird.", "en": "The pattern goes from Alice to a movie and back to a person through another ACTED_IN edge. Relationship uniqueness prevents reusing the same edge in both positions."},
+      "expectedResult": {"de": "Bob für The Matrix und Carol für Database Wars.", "en": "Bob for The Matrix and Carol for Database Wars."}
+    },
+    {
+      "id": "C40",
+      "difficulty": 4,
+      "category": "Subqueries",
+      "title": {"de": "Pattern-Existenz mit EXISTS", "en": "Pattern existence with EXISTS"},
+      "question": {"de": "Finde Personen, die mindestens eine Person in Berlin kennen.", "en": "Find people who know at least one person in Berlin."},
+      "query": "MATCH (person:Person)\nWHERE EXISTS {\n  MATCH (person)-[:KNOWS]->(:Person {city:'Berlin'})\n}\nRETURN person.name",
+      "explanation": {"de": "Die EXISTS-Subquery liefert pro äußerer person nur true oder false. Variablen aus der äußeren Query sind innerhalb der Subquery sichtbar.", "en": "The EXISTS subquery returns only true or false per outer person. Variables from the outer query are visible inside the subquery."},
+      "expectedResult": {"de": "Bob und Dave, weil beide Carol in Berlin kennen.", "en": "Bob and Dave because both know Carol in Berlin."}
+    },
+    {
+      "id": "C41",
+      "difficulty": 4,
+      "category": "Subqueries",
+      "title": {"de": "Anti-Pattern mit NOT EXISTS", "en": "Anti-pattern with NOT EXISTS"},
+      "question": {"de": "Finde Personen ohne ausgehende KNOWS-Beziehung zu einer Person aus Vienna.", "en": "Find people without an outgoing KNOWS relationship to someone from Vienna."},
+      "query": "MATCH (person:Person)\nWHERE NOT EXISTS {\n  MATCH (person)-[:KNOWS]->(:Person {city:'Vienna'})\n}\nRETURN person.name",
+      "explanation": {"de": "NOT EXISTS formuliert eine Negation über ein ganzes Pattern. Das ist klarer als ein OPTIONAL MATCH mit nachträglicher null-Prüfung.", "en": "NOT EXISTS expresses negation over an entire pattern. It is clearer than OPTIONAL MATCH followed by a null check."},
+      "expectedResult": {"de": "Nur Dave. Carol kennt Eve aus Vienna und wird deshalb ausgeschlossen.", "en": "Only Dave. Carol knows Eve from Vienna and is therefore excluded."}
+    },
+    {
+      "id": "C42",
+      "difficulty": 4,
+      "category": "Lists",
+      "title": {"de": "Alle Beziehungen eines Pfads prüfen", "en": "Check every relationship in a path"},
+      "question": {"de": "Finde Alice-Pfade bis Länge 3, deren jede KNOWS-Kante strength mindestens 5 besitzt.", "en": "Find Alice paths up to length 3 where every KNOWS edge has strength at least 5."},
+      "query": "MATCH path = (:Person {name:'Alice'})-[:KNOWS*1..3]->(target:Person)\nWHERE all(rel IN relationships(path) WHERE rel.strength >= 5)\nRETURN target.name,\n       [rel IN relationships(path) | rel.strength] AS strengths",
+      "explanation": {"de": "relationships(path) erzeugt eine Liste. all prüft, ob das Prädikat für jedes Listenelement gilt.", "en": "relationships(path) produces a list. all checks whether the predicate holds for every list element."},
+      "expectedResult": {"de": "Bob, Carol und Eve über Alice→Bob→Carol→Eve; Pfade über die strength-3-Kante zu Dave scheiden aus.", "en": "Bob, Carol, and Eve through Alice→Bob→Carol→Eve; paths through the strength-3 edge to Dave are excluded."}
+    },
+    {
+      "id": "C43",
+      "difficulty": 4,
+      "category": "Lists",
+      "title": {"de": "Pfadkosten mit reduce berechnen", "en": "Calculate path cost with reduce"},
+      "question": {"de": "Berechne die Gesamtdistanz jeder Route von VIE nach BER mit höchstens drei Flügen.", "en": "Calculate total distance for every route from VIE to BER using at most three flights."},
+      "query": "MATCH path = (:Airport {code:'VIE'})-[:FLIGHT*1..3]->(:Airport {code:'BER'})\nRETURN [node IN nodes(path) | node.code] AS route,\n       reduce(total = 0, rel IN relationships(path) |\n              total + rel.distance) AS totalDistance\nORDER BY totalDistance",
+      "explanation": {"de": "reduce faltet die Relationship-Liste zu einem Wert. total startet bei 0 und wird für jede Kante um distance erhöht.", "en": "reduce folds the relationship list into one value. total starts at 0 and is increased by distance for each edge."},
+      "expectedResult": {"de": "VIE–CDG–BER mit Gesamtdistanz 1910.", "en": "VIE–CDG–BER with total distance 1910."}
+    },
+    {
+      "id": "C44",
+      "difficulty": 5,
+      "category": "Aggregation",
+      "title": {"de": "Kartesisches Produkt erkennen", "en": "Recognize a Cartesian product"},
+      "question": {"de": "Warum erzeugt die erste Query zu viele Kombinationen?", "en": "Why does the first query produce too many combinations?"},
+      "query": "MATCH (person:Person), (room:Room)\nRETURN person.name, room.type",
+      "alternative": "MATCH (guest:Guest)-[:BOOKED]->(room:Room)\nRETURN guest.name, room.type",
+      "explanation": {"de": "Die Variablen person und room sind im ersten MATCH nicht verbunden. Deshalb wird jede Person mit jedem Zimmer kombiniert. Die Alternative besitzt ein fachliches Beziehungspattern.", "en": "In the first MATCH, person and room are not connected. Therefore every person is combined with every room. The alternative contains a domain relationship pattern."},
+      "expectedResult": {"de": "Erste Query: 5 × 3 = 15 Zeilen. Alternative: eine Zeile pro BOOKED-Kante.", "en": "First query: 5 × 3 = 15 rows. Alternative: one row per BOOKED edge."},
+      "pitfall": {"de": "Unverbundene Pattern-Teile vervielfachen auch Aggregate und sind eine typische Klausurfalle.", "en": "Disconnected pattern parts also multiply aggregates and are a common exam trap."}
+    },
+    {
+      "id": "C45",
+      "difficulty": 5,
+      "category": "Paths",
+      "title": {"de": "Mehrfachpfade korrekt zählen", "en": "Count multiple paths correctly"},
+      "question": {"de": "Wie viele verschiedene Personen erreicht Alice in höchstens drei Schritten, unabhängig von der Zahl der Pfade?", "en": "How many distinct people can Alice reach within three steps, regardless of path count?"},
+      "query": "MATCH (:Person {name:'Alice'})-[:KNOWS*1..3]->(reachable:Person)\nRETURN count(*) AS paths,\n       count(DISTINCT reachable) AS people",
+      "explanation": {"de": "count(*) zählt Pfad-Matches. Dieselbe Zielperson kann über mehrere Wege vorkommen. count(DISTINCT reachable) zählt Zielknoten.", "en": "count(*) counts path matches. The same target person may occur through multiple routes. count(DISTINCT reachable) counts target nodes."},
+      "expectedResult": {"de": "people ist kleiner oder gleich paths; durch den Zyklus wird auch Alice wieder erreicht, daher sind es fünf verschiedene Zielpersonen.", "en": "people is less than or equal to paths; the cycle reaches Alice again, so five distinct target people are reachable."}
+    },
+    {
+      "id": "C46",
+      "difficulty": 5,
+      "category": "Subqueries",
+      "title": {"de": "Top-Buchung pro Zimmer mit CALL-Subquery", "en": "Top booking per room with a CALL subquery"},
+      "question": {"de": "Finde für jedes Zimmer die längste einzelne Buchung.", "en": "Find the longest individual booking for each room."},
+      "query": "MATCH (room:Room)\nCALL {\n  WITH room\n  MATCH (guest:Guest)-[booking:BOOKED]->(room)\n  RETURN guest, booking\n  ORDER BY booking.nights DESC, guest.name\n  LIMIT 1\n}\nRETURN room.id, room.type,\n       guest.name AS guest,\n       booking.nights AS nights\nORDER BY room.id",
+      "explanation": {"de": "Die korrelierte Subquery läuft einmal pro äußerem room. ORDER BY und LIMIT gelten dadurch innerhalb jedes Zimmers statt global.", "en": "The correlated subquery runs once per outer room. ORDER BY and LIMIT therefore apply inside each room rather than globally."},
+      "expectedResult": {"de": "Zimmer 1 Ben/10, Zimmer 2 Alice/7, Zimmer 3 Tom/5.", "en": "Room 1 Ben/10, room 2 Alice/7, room 3 Tom/5."},
+      "pitfall": {"de": "Ein globales LIMIT 1 nach allen Zimmern würde nur eine einzige Buchung insgesamt liefern.", "en": "A global LIMIT 1 after all rooms would return only one booking overall."}
+    },
+    {
+      "id": "C47",
+      "difficulty": 5,
+      "category": "Paths",
+      "title": {"de": "Alle kürzesten Flugwege pro Startflughafen", "en": "All shortest flight paths per origin airport"},
+      "question": {"de": "Finde für jeden anderen Flughafen alle kürzesten gerichteten Wege nach BER.", "en": "For every other airport, find all shortest directed paths to BER."},
+      "query": "MATCH (origin:Airport), (ber:Airport {code:'BER'})\nWHERE origin <> ber\nMATCH path = allShortestPaths((origin)-[:FLIGHT*..5]->(ber))\nRETURN origin.code,\n       [node IN nodes(path) | node.code] AS route,\n       length(path) AS flights\nORDER BY origin.code, route",
+      "explanation": {"de": "origin wird zuerst für jeden Flughafen gebunden. allShortestPaths wird daher pro Startflughafen ausgewertet und kann mehrere gleich kurze Routen liefern.", "en": "origin is first bound for every airport. allShortestPaths is therefore evaluated per origin and may return several equally short routes."},
+      "expectedResult": {"de": "CDG erreicht BER direkt; VIE über CDG; TXL über VIE und CDG.", "en": "CDG reaches BER directly; VIE via CDG; TXL via VIE and CDG."}
+    },
+    {
+      "id": "C48",
+      "difficulty": 5,
+      "category": "Performance",
+      "title": {"de": "Constraint und Index für stabile Identität", "en": "Constraint and index for stable identity"},
+      "question": {"de": "Wie werden eindeutige Personennamen und schnelle Room-type-Suchen unterstützt?", "en": "How are unique person names and fast Room type lookups supported?"},
+      "query": "CREATE CONSTRAINT person_name_unique IF NOT EXISTS\nFOR (person:Person)\nREQUIRE person.name IS UNIQUE;\n\nCREATE INDEX room_type_index IF NOT EXISTS\nFOR (room:Room)\nON (room.type);",
+      "explanation": {"de": "Der Uniqueness Constraint verhindert doppelte Person.name-Werte und legt die Grundlage für sicheres MERGE. Der Range-Index unterstützt Suchen nach room.type, erzwingt aber keine Eindeutigkeit.", "en": "The uniqueness constraint prevents duplicate Person.name values and supports safe MERGE. The range index supports lookups by room.type but does not enforce uniqueness."},
+      "expectedResult": {"de": "Neo4j legt ein Schema-Constraint und einen Suchindex an.", "en": "Neo4j creates a schema constraint and a search index."},
+      "pitfall": {"de": "Mehrere Statements müssen im Neo4j Browser gegebenenfalls einzeln ausgeführt werden.", "en": "Depending on the Neo4j Browser, the two statements may need to be executed separately."}
+    }
+  ]
+}

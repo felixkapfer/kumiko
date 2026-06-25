@@ -1,0 +1,28 @@
+[
+  {
+    "_id": 1,
+    "type": "Single",
+    "price": 89,
+    "occupancy": [
+      { "year": 2024, "available_nights": 280 },
+      { "year": 2025, "available_nights": 310 }
+    ]
+  },
+  {
+    "_id": 2,
+    "type": "Double",
+    "price": 149,
+    "occupancy": [
+      { "year": 2025, "available_nights": 240 }
+    ]
+  },
+  {
+    "_id": 3,
+    "type": "Suite",
+    "price": 299,
+    "occupancy": [
+      { "year": 2024, "available_nights": 180 },
+      { "year": 2025, "available_nights": 195 }
+    ]
+  }
+]

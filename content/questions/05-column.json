@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "label": "Column & Wide Column Stores",
+  "questions": [
+    {
+      "id": "column-001",
+      "topic": "column",
+      "difficulty": 1,
+      "prompt": "Welche Aussagen erklären den Vorteil klassischer Column Stores für Analytics?",
+      "options": [
+        {"id":"a","text":"Eine Query kann nur die tatsächlich benötigten Spalten lesen.","correct":true,"explanation":"Das reduziert I/O bei breiten Tabellen."},
+        {"id":"b","text":"Werte einer Spalte besitzen denselben Datentyp und oft ähnliche Verteilungen.","correct":true,"explanation":"Das verbessert Kompression und Verarbeitung."},
+        {"id":"c","text":"SIMD und gute Cache-Lokalität passen zu spaltenweiser Verarbeitung.","correct":true,"explanation":"Viele Werte erhalten dieselbe Operation."},
+        {"id":"d","text":"Jede Einzelzeilen-Insertion wird automatisch billiger als in einem Row Store.","correct":false,"explanation":"Updates über getrennte und komprimierte Spalten können teuer sein."}
+      ],
+      "explanation": "Column Stores optimieren selektive analytische Scans, nicht pauschal alle Workloads.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 5–9"},
+      "tags": ["Grundlagen","Analytics"]
+    },
+    {
+      "id": "column-002",
+      "topic": "column",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über explizite und virtuelle IDs sind korrekt?",
+      "options": [
+        {"id":"a","text":"Explizite IDs speichern zu jedem Spaltenwert eine Tuple-ID.","correct":true,"explanation":"Damit können Spaltenwerte derselben Zeile verbunden werden."},
+        {"id":"b","text":"Explizite IDs erhöhen Datenmenge und I/O.","correct":true,"explanation":"Die IDs werden in jeder Spalte mitgespeichert."},
+        {"id":"c","text":"Virtuelle IDs können die Position eines Werts als Identität verwenden.","correct":true,"explanation":"Der Offset ersetzt eine eigene ID-Spalte."},
+        {"id":"d","text":"Variable-width-Kompression macht virtuelle IDs immer einfacher.","correct":false,"explanation":"Sie erschwert die direkte Offset-Berechnung."}
+      ],
+      "explanation": "Virtuelle IDs sparen Platz, setzen aber stabile, berechenbare Positionen voraus.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 11–13"},
+      "tags": ["IDs","Rekonstruktion"]
+    },
+    {
+      "id": "column-003",
+      "topic": "column",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über Run-Length Encoding sind korrekt?",
+      "options": [
+        {"id":"a","text":"Es speichert Folgen gleicher Werte als (Wert, Wiederholungszahl).","correct":true,"explanation":"Das ist das RLE-Prinzip."},
+        {"id":"b","text":"Es ist besonders gut bei langen aufeinanderfolgenden Wiederholungen.","correct":true,"explanation":"Dann werden viele Einträge zu einem Paar."},
+        {"id":"c","text":"Bei alternierenden oder fast nur einzigartigen Werten kann es schlechter als unkomprimierte Speicherung sein.","correct":true,"explanation":"Die Metadaten jedes kurzen Laufs erzeugen Overhead."},
+        {"id":"d","text":"Es erhält zwingend für jeden Originalwert eine direkt berechenbare feste Byteposition.","correct":false,"explanation":"Variable Lauflängen erschweren virtuelle Offsets."}
+      ],
+      "explanation": "RLE hängt stark von der Reihenfolge der Werte ab.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folie 16"},
+      "tags": ["Compression","RLE"]
+    },
+    {
+      "id": "column-004",
+      "topic": "column",
+      "difficulty": 3,
+      "prompt": "Welche Zuordnungen von Daten und Kompressionsverfahren sind plausibel?",
+      "options": [
+        {"id":"a","text":"Lange Folgen desselben Rechnungsdatums → Run-Length Encoding","correct":true,"explanation":"Lange Runs sind ideal für RLE."},
+        {"id":"b","text":"Geburtsmonat mit nur 12 möglichen Werten → Bit-Vector Encoding","correct":true,"explanation":"Kleine Domäne ist geeignet."},
+        {"id":"c","text":"Lange wiederkehrende Adressstrings → Dictionary Encoding","correct":true,"explanation":"Lange Werte werden durch kurze IDs ersetzt."},
+        {"id":"d","text":"Eine Spalte mit fast ausschließlich NULL → Null Suppression","correct":true,"explanation":"Sparse Werte werden ohne die vielen NULLs gespeichert."}
+      ],
+      "explanation": "Alle Zuordnungen entsprechen den typischen Einsatzmustern der Verfahren.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 16–22"},
+      "tags": ["Compression","Auswahl"]
+    },
+    {
+      "id": "column-005",
+      "topic": "column",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen zum Größenvergleich von RLE, Bit-Vector und Dictionary Encoding sind allgemein korrekt?",
+      "options": [
+        {"id":"a","text":"RLE kann je nach Daten kleiner oder größer als Bit-Vector Encoding sein.","correct":true,"explanation":"Lange Runs bevorzugen RLE, häufige Wechsel können Bitmap bevorzugen."},
+        {"id":"b","text":"Dictionary Encoding ist für jede mögliche Spalte immer kleiner als RLE.","correct":false,"explanation":"Kein Verfahren dominiert alle Datenverteilungen."},
+        {"id":"c","text":"Bit-Vector Encoding kann bei sehr vielen unterschiedlichen Werten enormen Platz benötigen.","correct":true,"explanation":"Es benötigt grundsätzlich einen Bitstring pro Wert."},
+        {"id":"d","text":"Die konkrete Werteverteilung und Reihenfolge sind entscheidend.","correct":true,"explanation":"Kompressionswahl ist spalten- und anwendungsspezifisch."}
+      ],
+      "explanation": "Vergleiche ohne konkrete Daten erlauben meist keine eindeutige Rangfolge.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 16–22"},
+      "tags": ["Compression","Vergleich"]
+    },
+    {
+      "id": "column-006",
+      "topic": "column",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Operationen auf komprimierten Daten sind korrekt?",
+      "options": [
+        {"id":"a","text":"Ein SUM über RLE kann Werte mit ihren Wiederholungszahlen multiplizieren.","correct":true,"explanation":"Eine vollständige Expansion ist dafür nicht nötig."},
+        {"id":"b","text":"Direkte Verarbeitung kann I/O und Dekompressionskosten sparen.","correct":true,"explanation":"Das ist der ideale Performancegewinn."},
+        {"id":"c","text":"Jede beliebige Operation funktioniert automatisch auf jedem Kompressionsformat.","correct":false,"explanation":"Die Query Engine braucht verfahrensspezifische Implementierungen."},
+        {"id":"d","text":"Komprimierte Ausführung kann das System komplexer machen.","correct":true,"explanation":"Viele Formate und Operatorvarianten müssen unterstützt werden."}
+      ],
+      "explanation": "Kompression und Query Execution können integriert werden, aber nicht kostenlos.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 20–22"},
+      "tags": ["Compression","Execution"]
+    },
+    {
+      "id": "column-007",
+      "topic": "column",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen unterscheiden Early und Late Materialization korrekt?",
+      "options": [
+        {"id":"a","text":"Early Materialization setzt Zeilen kurz nach dem Lesen der Spalten zusammen.","correct":true,"explanation":"Das ist die frühe Rekonstruktion."},
+        {"id":"b","text":"Late Materialization arbeitet möglichst lange mit Einzelspalten und Positionslisten.","correct":true,"explanation":"So bleiben spaltenorientierte Vorteile erhalten."},
+        {"id":"c","text":"Early Materialization fördert typischerweise weitere Vektorisierung und Kompressionsvorteile.","correct":false,"explanation":"Sie verliert viele dieser Vorteile früh."},
+        {"id":"d","text":"Bestimmte Aggregationen können vollständige Materialisierung ganz vermeiden.","correct":true,"explanation":"Wenn nur gefilterte Werte einer Spalte aggregiert werden, reichen Positionsbezüge."}
+      ],
+      "explanation": "Materialisierung ist notwendig, wenn Attribute zusammengeführt werden müssen, aber der Zeitpunkt ist entscheidend.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 24–25"},
+      "tags": ["Materialization","Grundlagen"]
+    },
+    {
+      "id": "column-008",
+      "topic": "column",
+      "difficulty": 4,
+      "prompt": "Gegeben ist Ra=[(1,3),(2,16),(3,25),(4,9),(5,5),(6,31)]. Was liefert select(Ra,5,20)?",
+      "options": [
+        {"id":"a","text":"Position 2","correct":true,"explanation":"Ra[2]=16 liegt im inklusiven Intervall."},
+        {"id":"b","text":"Position 4","correct":true,"explanation":"Ra[4]=9 qualifiziert."},
+        {"id":"c","text":"Position 5","correct":true,"explanation":"Ra[5]=5 liegt auf der unteren inklusiven Grenze."},
+        {"id":"d","text":"Position 3","correct":false,"explanation":"Ra[3]=25 ist größer als 20."}
+      ],
+      "explanation": "select gibt Positions-IDs zurück, nicht die Werte selbst.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 25–28; Übung 3"},
+      "tags": ["Late Materialization","Select"]
+    },
+    {
+      "id": "column-009",
+      "topic": "column",
+      "difficulty": 5,
+      "prompt": "Führe den Late-Materialization-Plan gedanklich aus. Welche Zwischenergebnisse sind korrekt?",
+      "context": "Ra=[(1,3),(2,16),(3,25),(4,9),(5,5),(6,31)]\nRb=[(1,12),(2,34),(3,17),(4,56),(5,22),(6,34)]\nSa=[(1,34),(2,22),(3,17)]\n\ninter1=select(Ra,5,20)\ninter2=reconstruct(Rb,inter1)\nright=reverse(Sa)\njoin_res=join(inter2,right)",
+      "options": [
+        {"id":"a","text":"inter1 = [2,4,5]","correct":true,"explanation":"Die Werte 16, 9 und 5 qualifizieren."},
+        {"id":"b","text":"inter2 = [(2,34),(4,56),(5,22)]","correct":true,"explanation":"Rb wird an den drei Positionen rekonstruiert."},
+        {"id":"c","text":"right = [(34,1),(22,2),(17,3)]","correct":true,"explanation":"reverse vertauscht value und pos."},
+        {"id":"d","text":"join_res = [(2,1),(4,3),(5,2)]","correct":false,"explanation":"Rb=56 an Position 4 hat keinen Match in Sa."}
+      ],
+      "explanation": "Der korrekte join_res ist [(2,1),(5,2)].",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 25–28; Übung 3"},
+      "tags": ["Late Materialization","Join"]
+    },
+    {
+      "id": "column-010",
+      "topic": "column",
+      "difficulty": 5,
+      "prompt": "Setze den Plan aus der vorherigen Aufgabe fort. Welche Aussagen sind korrekt?",
+      "context": "join_res=[(2,1),(5,2)]\ninter3=voidTail(join_res)\ninter4=reconstruct(Ra,inter3)\nresult=sum(inter4)",
+      "options": [
+        {"id":"a","text":"inter3 = [2,5]","correct":true,"explanation":"voidTail behält die linke Position."},
+        {"id":"b","text":"inter4 = [(2,16),(5,5)]","correct":true,"explanation":"Ra wird nur für die überlebenden R-Positionen rekonstruiert."},
+        {"id":"c","text":"result = 21","correct":true,"explanation":"16+5=21."},
+        {"id":"d","text":"Für das Ergebnis müssen zusätzlich vollständige R- und S-Tupel materialisiert werden.","correct":false,"explanation":"Die Aggregation kommt mit Positionen und der benötigten Ra-Spalte aus."}
+      ],
+      "explanation": "Das Beispiel zeigt, wie Late Materialization unnötige Rekonstruktion vermeidet.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 25–28; Übung 3"},
+      "tags": ["Late Materialization","Aggregation"]
+    },
+    {
+      "id": "column-011",
+      "topic": "column",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen über Updates in Column Stores sind korrekt?",
+      "options": [
+        {"id":"a","text":"Ein Insert kann Writes in mehreren getrennten Spaltendateien erfordern.","correct":true,"explanation":"Alle Attribute der neuen Zeile müssen ergänzt werden."},
+        {"id":"b","text":"Ein Update in einer komprimierten Spalte kann Dekompression und Rekompresion verursachen.","correct":true,"explanation":"Im ungünstigen Fall muss die Struktur neu aufgebaut werden."},
+        {"id":"c","text":"Ein separater Write Store kann neue Änderungen updatefreundlich aufnehmen.","correct":true,"explanation":"Der große Read Store bleibt optimiert."},
+        {"id":"d","text":"Queries dürfen den Write Store ignorieren, bis er in den Read Store übernommen wurde.","correct":false,"explanation":"Queries müssen beide Stores auswerten und Ergebnisse zusammenführen."}
+      ],
+      "explanation": "Read- und Write-Store trennen optimierte Layouts, verlangen aber kombinierte Query-Auswertung.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folie 30"},
+      "tags": ["Updates","Write Store"]
+    },
+    {
+      "id": "column-012",
+      "topic": "column",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen beschreiben Bigtable korrekt?",
+      "options": [
+        {"id":"a","text":"Bigtable kann als Map von Row Key, Column und Timestamp auf einen Wert verstanden werden.","correct":true,"explanation":"Das ist das zentrale Datenmodell."},
+        {"id":"b","text":"Rows werden lexikografisch nach ihrem Key gespeichert.","correct":true,"explanation":"Die Key-Wahl steuert damit Datenlokalität."},
+        {"id":"c","text":"Ein Tablet ist die Einheit von Verteilung und Load Balancing.","correct":true,"explanation":"Es gruppiert aufeinanderfolgende Rows."},
+        {"id":"d","text":"Transaktionen über beliebig viele Rows sind die primäre garantierte Atomaritätsgrenze.","correct":false,"explanation":"Zugriff innerhalb einer einzelnen Row ist atomar."}
+      ],
+      "explanation": "Bigtable ist eine verteilte, sparse, versionierte Wide-Column-Map.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 35–38"},
+      "tags": ["Bigtable","Datenmodell"]
+    },
+    {
+      "id": "column-013",
+      "topic": "column",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen über Bigtable Column Families und Versionen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Column Families müssen explizit angelegt werden, bevor Daten gespeichert werden.","correct":true,"explanation":"Sie sind der stabile Schemakern."},
+        {"id":"b","text":"Innerhalb einer Family kann es sehr viele Qualifier geben.","correct":true,"explanation":"Die Zahl der Columns in einer Family ist praktisch unbeschränkt."},
+        {"id":"c","text":"Zellversionen werden in absteigender Timestamp-Reihenfolge gespeichert.","correct":true,"explanation":"Die neuesten Versionen stehen zuerst."},
+        {"id":"d","text":"Garbage Collection kann nur global für die gesamte Tabelle konfiguriert werden.","correct":false,"explanation":"Retention-Optionen werden pro Column Family angegeben."}
+      ],
+      "explanation": "Families sind grobe, explizite Gruppen; Qualifier und Versionen liefern flexible Feinstruktur.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 39–40"},
+      "tags": ["Bigtable","Column Family"]
+    },
+    {
+      "id": "column-014",
+      "topic": "column",
+      "difficulty": 5,
+      "prompt": "Welche Aussagen über Bigtable-Infrastruktur und verwandte Systeme sind korrekt?",
+      "options": [
+        {"id":"a","text":"GFS speichert Log- und Datendateien.","correct":true,"explanation":"Es ist die verteilte Dateisystembasis."},
+        {"id":"b","text":"SSTables sind unveränderliche, nach Key sortierte Dateien mit Blockindex.","correct":true,"explanation":"Sie sind ein zentrales persistentes Format."},
+        {"id":"c","text":"Chubby ist ein verteilter Lock Service und Einstiegspunkt zu Bigtable-Daten.","correct":true,"explanation":"Es koordiniert und hilft beim Auffinden des Systems."},
+        {"id":"d","text":"HBase und Cassandra besitzen laut Folien identische Master-Architektur und PACELC-Einordnung.","correct":false,"explanation":"HBase ist master-basiert PC/EC; Cassandra masterless PA/EL."}
+      ],
+      "explanation": "Wide-Column-Systeme teilen Ideen, treffen aber unterschiedliche Architektur- und Konsistenzentscheidungen.",
+      "source": {"deck":"ADBS-ColumnStores.pdf","pages":"Folien 36, 42–43"},
+      "tags": ["Bigtable","Systeme"]
+    }
+  ]
+}

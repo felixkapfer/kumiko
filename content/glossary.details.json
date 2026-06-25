@@ -1,0 +1,460 @@
+{
+  "ACID": {
+    "tags": ["Transactions", "Consistency", "Isolation", "Durability"],
+    "expansion": {
+      "de": "Atomicity, Consistency, Isolation, Durability",
+      "en": "Atomicity, Consistency, Isolation, Durability"
+    },
+    "summary": {
+      "de": "ACID bündelt vier Eigenschaften zuverlässiger Datenbanktransaktionen. Sie sorgen dafür, dass eine logisch zusammengehörige Operation vollständig oder gar nicht wirkt, gültige Zustände erhält, parallele Transaktionen kontrolliert voneinander trennt und bestätigte Änderungen nicht wieder verliert.",
+      "en": "ACID combines four properties of reliable database transactions: all-or-nothing execution, preservation of valid states, controlled isolation of concurrent transactions, and durability of committed changes."
+    },
+    "keyPoints": {
+      "de": [
+        "Atomicity: Alle Operationen einer Transaktion werden gemeinsam übernommen oder gemeinsam zurückgerollt.",
+        "Consistency: Eine erfolgreiche Transaktion überführt die Datenbank von einem gültigen Zustand in einen gültigen Zustand und verletzt keine definierten Integritätsregeln.",
+        "Isolation: Parallel laufende Transaktionen sollen sich nicht über unzulässige Zwischenzustände beeinflussen; die konkrete Stärke hängt vom Isolationsniveau ab.",
+        "Durability: Nach einem Commit bleiben Änderungen auch nach Absturz oder Neustart erhalten."
+      ],
+      "en": [
+        "Atomicity: all operations of a transaction commit together or are rolled back together.",
+        "Consistency: a successful transaction moves the database from one valid state to another without violating defined integrity rules.",
+        "Isolation: concurrent transactions must not interfere through invalid intermediate states; the exact guarantee depends on the isolation level.",
+        "Durability: committed changes survive crashes and restarts."
+      ]
+    },
+    "details": {
+      "de": [
+        "Eine Transaktion fasst mehrere Lese- und Schreiboperationen zu einer logischen Einheit zusammen. ACID beschreibt, welche Zuverlässigkeit diese Einheit bietet.",
+        "Atomicity verhindert halbfertige Änderungen. Scheitert bei einer Überweisung das Gutschreiben, muss auch das vorherige Abbuchen zurückgenommen werden.",
+        "Consistency bezieht sich auf fachliche und technische Invarianten wie Primärschlüssel, Fremdschlüssel, Wertebereiche oder die Regel, dass die Summe bestimmter Bestände erhalten bleibt.",
+        "Isolation regelt, was gleichzeitig laufende Transaktionen voneinander sehen. Stärkere Isolationsniveaus vermeiden mehr Anomalien, benötigen aber meist mehr Koordination.",
+        "Durability wird typischerweise durch persistentes Logging, Write-Ahead Logs, Replikation oder andere Recovery-Mechanismen umgesetzt.",
+        "ACID ist kein Synonym für relationale Datenbanken. Auch NoSQL-Systeme können ACID-Garantien bieten, häufig jedoch nur innerhalb bestimmter Grenzen wie eines Dokuments, Aggregats oder einer Zeile."
+      ],
+      "en": [
+        "A transaction groups multiple reads and writes into one logical unit. ACID describes the reliability guarantees of that unit.",
+        "Atomicity prevents partial effects. If crediting an account fails, the preceding debit must be rolled back as well.",
+        "Consistency concerns business and technical invariants such as keys, ranges, and application-specific rules.",
+        "Isolation controls what concurrent transactions can observe. Stronger levels prevent more anomalies but usually require more coordination.",
+        "Durability is commonly implemented through persistent logging, write-ahead logs, replication, or other recovery mechanisms.",
+        "ACID is not limited to relational databases. NoSQL systems may provide ACID guarantees within boundaries such as one document, aggregate, or row."
+      ]
+    },
+    "examples": {
+      "de": [
+        "Banküberweisung: T1 zieht 100 € von Konto A ab und schreibt 100 € Konto B gut. Atomicity verhindert nur das Abbuchen; Consistency erhält die Gesamtsumme; Isolation schützt vor störenden Parallelzugriffen; Durability erhält den bestätigten Kontostand nach einem Absturz.",
+        "Bestellung: Lagerbestand reduzieren, Bestellung anlegen und Zahlung verbuchen gehören fachlich zusammen. Ohne passende Transaktionsgrenze könnte eine Bestellung existieren, obwohl der Bestand nicht reduziert oder die Zahlung nicht gespeichert wurde.",
+        "MongoDB: Eine Änderung innerhalb eines einzelnen Dokuments ist atomar. Für Änderungen über mehrere Dokumente sind explizite Multi-Document-Transaktionen möglich, aber teurer. Deshalb werden Dokumentgrenzen oft so gewählt, dass zusammengehörige Änderungen in einem Dokument bleiben."
+      ],
+      "en": [
+        "Bank transfer: debit account A and credit account B. Atomicity prevents a partial transfer; consistency preserves invariants; isolation protects concurrent execution; durability preserves the committed result after a crash.",
+        "Order processing may need to update inventory, create the order, and record payment as one transaction to avoid partial business states.",
+        "MongoDB single-document changes are atomic. Multi-document transactions exist but are more expensive, which makes document boundaries important."
+      ]
+    },
+    "watchOut": {
+      "de": [
+        "Das C in ACID ist nicht dasselbe wie Consistency im CAP-Theorem. ACID-Consistency meint die Einhaltung definierter Invarianten; CAP-Consistency meint in der Vorlesung Single-Copy Consistency zwischen Replikaten.",
+        "Atomicity und Durability sind verschieden: Atomicity verhindert teilweise Ausführung, Durability verhindert den Verlust eines bereits bestätigten Ergebnisses.",
+        "Isolation bedeutet nicht automatisch, dass jede Datenbank immer vollständige Serialisierbarkeit verwendet. Das tatsächliche Isolationsniveau ist entscheidend.",
+        "ACID sagt allein nichts darüber aus, wie schnell oder wie gut horizontal skalierbar ein System ist."
+      ],
+      "en": [
+        "Consistency in ACID is not the same as consistency in CAP. ACID consistency concerns invariants; CAP consistency concerns a single-copy view across replicas.",
+        "Atomicity prevents partial execution, while durability prevents loss after commit.",
+        "Isolation does not automatically imply full serializability; the configured isolation level matters.",
+        "ACID alone says nothing about performance or horizontal scalability."
+      ]
+    },
+    "examQuestions": [
+      {
+        "q": {
+          "de": "Erkläre die vier ACID-Eigenschaften anhand einer Banküberweisung von Konto A nach Konto B.",
+          "en": "Explain the four ACID properties using a bank transfer from account A to account B."
+        },
+        "a": {
+          "de": "Atomicity: Abbuchung und Gutschrift erfolgen beide oder keine. Consistency: definierte Regeln wie Erhaltung der Gesamtsumme bleiben erfüllt. Isolation: parallele Transaktionen sehen keinen unzulässigen halbfertigen Transfer und erzeugen keine verbotene Anomalie. Durability: Nach dem Commit bleibt die Überweisung trotz Absturz gespeichert.",
+          "en": "Atomicity: debit and credit both happen or neither does. Consistency: defined invariants remain valid. Isolation: concurrent transactions cannot observe or cause an invalid partial transfer. Durability: the committed transfer survives a crash."
+        }
+      },
+      {
+        "q": {
+          "de": "Warum widersprechen ACID und NoSQL einander nicht grundsätzlich?",
+          "en": "Why are ACID and NoSQL not fundamentally contradictory?"
+        },
+        "a": {
+          "de": "NoSQL beschreibt eine Familie nichtrelationaler Datenmodelle und Systeme, keine feste Transaktionsgarantie. Ein NoSQL-System kann ACID vollständig oder innerhalb einer begrenzten Einheit wie Dokument, Aggregat oder Row anbieten.",
+          "en": "NoSQL describes a family of non-relational models and systems, not one fixed transaction guarantee. A NoSQL system can offer ACID fully or within a bounded unit such as a document, aggregate, or row."
+        }
+      },
+      {
+        "q": {
+          "de": "Unterscheide ACID-Consistency von CAP-Consistency.",
+          "en": "Distinguish ACID consistency from CAP consistency."
+        },
+        "a": {
+          "de": "ACID-Consistency verlangt, dass eine Transaktion definierte Datenbank- und Geschäftsregeln erhält. CAP-Consistency verlangt eine konsistente Sicht auf replizierte Daten, in der das System wie eine einzelne Kopie wirkt.",
+          "en": "ACID consistency preserves database and business invariants. CAP consistency requires a single-copy view of replicated data."
+        }
+      }
+    ],
+    "related": ["BASE", "Single-Copy Consistency", "Write-Ahead Log", "Aggregate", "Read Concern"]
+  },
+  "CAP-Theorem": {
+    "tags": ["CAP", "Consistency", "Availability", "Partition"],
+    "expansion": {
+      "de": "Consistency, Availability, Partition Tolerance",
+      "en": "Consistency, Availability, Partition Tolerance"
+    },
+    "summary": {
+      "de": "CAP beschreibt den Zielkonflikt in einem verteilten System während einer Netzwerkpartition: vollständige Konsistenz und vollständige Verfügbarkeit können dann nicht gleichzeitig garantiert werden.",
+      "en": "CAP describes the trade-off in a distributed system during a network partition: full consistency and full availability cannot both be guaranteed then."
+    },
+    "details": {
+      "de": [
+        "Consistency bedeutet in den Folien Single-Copy Consistency: Das System wirkt wie eine einzelne sequenziell verarbeitete Kopie.",
+        "Availability bedeutet nicht „irgendein Knoten läuft“, sondern jede Anfrage an einen nicht ausgefallenen Knoten muss beantwortet werden.",
+        "Partition Tolerance bedeutet, dass das System trotz einer Netzwerkpartition weiterarbeitet."
+      ],
+      "en": [
+        "Consistency means single-copy consistency: the system behaves like one sequentially processed copy.",
+        "Availability does not mean “some node is up”; every request to a non-failing node must receive a response.",
+        "Partition tolerance means that the system keeps operating despite a network partition."
+      ]
+    },
+    "examples": {
+      "de": ["Wenn Gruppe G1 einen Write akzeptiert und Gruppe G2 wegen Partition nichts davon erfährt, kann G2 nicht gleichzeitig aktuell konsistent antworten und jede Anfrage verfügbar beantworten."],
+      "en": ["If group G1 accepts a write and group G2 cannot learn about it due to a partition, G2 cannot both answer every request and return a fully consistent current value."]
+    },
+    "watchOut": {
+      "de": ["CAP ist kein allgemeines Performance-Theorem für den Normalbetrieb; dafür ist PACELC relevanter.", "CA ist in realistischen verteilten Systemen keine robuste Option, weil Partitionen nicht ausgeschlossen werden können."],
+      "en": ["CAP is not a general normal-operation performance theorem; PACELC covers that better.", "CA is not a robust option in realistic distributed systems because partitions cannot be ruled out."]
+    },
+    "examQuestions": [
+      {
+        "q": {"de": "Wofür steht CAP?", "en": "What does CAP stand for?"},
+        "a": {"de": "Consistency, Availability und Partition Tolerance.", "en": "Consistency, Availability and Partition Tolerance."}
+      },
+      {
+        "q": {"de": "Was ist die typische Prüfungsfalle bei Availability?", "en": "What is the typical exam trap for availability?"},
+        "a": {"de": "Availability ist stärker als „mindestens ein Knoten läuft“; jede Anfrage an einen nicht ausgefallenen Knoten muss beantwortet werden.", "en": "Availability is stronger than “at least one node is up”; every request to a non-failing node must get a response."}
+      }
+    ],
+    "related": ["PACELC", "Single-Copy Consistency", "Availability", "Partition Tolerance", "Network Partition"]
+  },
+  "PACELC": {
+    "tags": ["CAP", "Latency", "Consistency"],
+    "expansion": {
+      "de": "Partition: Availability vs. Consistency; Else: Latency vs. Consistency",
+      "en": "Partition: Availability vs. Consistency; Else: Latency vs. Consistency"
+    },
+    "summary": {
+      "de": "PACELC erweitert CAP: Bei Partitionen geht es um Availability versus Consistency, sonst um Latency versus Consistency.",
+      "en": "PACELC extends CAP: under partitions it is availability versus consistency; otherwise it is latency versus consistency."
+    },
+    "details": {
+      "de": ["PA/EC bedeutet: bei Partition Availability bevorzugen, sonst Consistency gegenüber Latenz bevorzugen.", "PC/EL bedeutet: bei Partition Consistency bevorzugen, sonst Latenz gegenüber Consistency bevorzugen."],
+      "en": ["PA/EC means: prefer availability under partition and consistency over latency otherwise.", "PC/EL means: prefer consistency under partition and latency over consistency otherwise."]
+    },
+    "examples": {
+      "de": ["Cassandra wird in den Folien als PA/EL eingeordnet; HBase als PC/EC."],
+      "en": ["The slides classify Cassandra as PA/EL and HBase as PC/EC."]
+    },
+    "watchOut": {
+      "de": ["Das erste C und das zweite C stehen beide für Consistency, nicht für Correctness."],
+      "en": ["Both Cs refer to consistency, not correctness."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Welchen Teil ignoriert CAP, den PACELC ergänzt?","en":"Which part does CAP ignore that PACELC adds?"},"a":{"de":"Den Normalbetrieb ohne Partition: Latenz versus Konsistenz.","en":"Normal operation without partition: latency versus consistency."}}
+    ],
+    "related": ["CAP-Theorem", "Availability", "Single-Copy Consistency"]
+  },
+  "Quorum Consensus": {
+    "tags": ["Quorum", "Replication", "Consistency"],
+    "summary": {
+      "de": "Quorum Consensus nutzt Read- und Write-Quoren, um Überlappungen zwischen Writes und zwischen Read und letztem Write zu erzwingen.",
+      "en": "Quorum consensus uses read and write quorums to force overlap between writes and between a read and the latest write."
+    },
+    "details": {
+      "de": ["Für Replikationsfaktor N müssen 2W > N und R + W > N gelten.", "2W > N verhindert zwei disjunkte Write-Quoren.", "R + W > N sorgt dafür, dass ein Read mindestens ein Replikat des letzten Writes erreicht."],
+      "en": ["For replication factor N, 2W > N and R + W > N must hold.", "2W > N prevents two disjoint write quorums.", "R + W > N ensures that a read reaches at least one replica from the latest write."]
+    },
+    "examples": {
+      "de": ["Bei N=7 ist R=4,W=4 erlaubt; R=3,W=4 nicht, weil R+W nur 7 ist."],
+      "en": ["For N=7, R=4,W=4 is valid; R=3,W=4 is not, because R+W is only 7."]
+    },
+    "watchOut": {
+      "de": ["Beide Ungleichungen sind strikt größer. Bei geradem N ist W=N/2 nicht genug.", "Version Stamps bleiben nötig, um die neueste Version zu erkennen."],
+      "en": ["Both inequalities are strict. For even N, W=N/2 is not enough.", "Version stamps are still required to identify the newest version."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Welche Bedingungen gelten für R,W,N?","en":"Which conditions apply to R,W,N?"},"a":{"de":"2W>N und R+W>N.","en":"2W>N and R+W>N."}}
+    ],
+    "related": ["ROWA", "Replication", "Version Stamp", "Vector Clock"]
+  },
+  "Lamport Clock": {
+    "tags": ["Logical Clocks", "Causality", "Versioning"],
+    "summary": {
+      "de": "Lamport-Uhren sind skalare logische Uhren. Sie ordnen kausale Ereignisse korrekt, erkennen Kausalität aber nicht vollständig.",
+      "en": "Lamport clocks are scalar logical clocks. They order causally related events correctly but cannot fully detect causality."
+    },
+    "details": {
+      "de": ["Send: lokalen Zähler erhöhen und mitsenden.", "Receive: max(local, empfangen)+1.", "Wenn e→e' gilt, dann C(e)<C(e'); die Umkehrung gilt nicht."],
+      "en": ["Send: increment local counter and attach it.", "Receive: max(local, received)+1.", "If e→e' then C(e)<C(e'); the converse does not hold."]
+    },
+    "examples": {
+      "de": ["Start A=2,B=5. A sendet Timestamp 3. B empfängt mit max(5,3)+1=6."],
+      "en": ["Start A=2,B=5. A sends timestamp 3. B receives with max(5,3)+1=6."]
+    },
+    "watchOut": {
+      "de": ["Aus kleineren skalaren Zeitstempeln folgt nicht automatisch Happened-Before."],
+      "en": ["A smaller scalar timestamp does not automatically imply happened-before."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Welche Clock Property erfüllt Lamport?","en":"Which clock property does Lamport satisfy?"},"a":{"de":"Die schwache Clock Property.","en":"The weak clock property."}}
+    ],
+    "related": ["Happened-Before", "Vector Clock", "Version Stamp"]
+  },
+  "Vector Clock": {
+    "tags": ["Logical Clocks", "Causality", "Versioning"],
+    "summary": {
+      "de": "Vektoruhren speichern pro Knoten eine Komponente und können kausale Ordnung sowie Nebenläufigkeit erkennen.",
+      "en": "Vector clocks store one component per node and can detect causal order as well as concurrency."
+    },
+    "details": {
+      "de": ["Send: eigene Komponente erhöhen und gesamten Vektor mitsenden.", "Receive: komponentenweises Maximum bilden, danach eigene Komponente erhöhen.", "Vektoren werden komponentenweise verglichen."],
+      "en": ["Send: increment own component and attach the full vector.", "Receive: take component-wise maximum, then increment own component.", "Vectors are compared component-wise."]
+    },
+    "examples": {
+      "de": ["(3,1,2) und (2,4,2) sind unvergleichbar, weil jede Uhr in einer anderen Komponente größer ist."],
+      "en": ["(3,1,2) and (2,4,2) are incomparable because each vector is larger in a different component."]
+    },
+    "watchOut": {
+      "de": ["Beim Receive wird nicht die Senderkomponente, sondern die eigene Empfängerkomponente erhöht."],
+      "en": ["On receive, the receiver increments its own component, not the sender's component."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Wann gilt VC < VC'?","en":"When does VC < VC' hold?"},"a":{"de":"Alle Komponenten sind ≤ und mindestens eine ist strikt kleiner.","en":"All components are ≤ and at least one is strictly smaller."}}
+    ],
+    "related": ["Lamport Clock", "Happened-Before", "Version Stamp"]
+  },
+  "Bitcask": {
+    "tags": ["Key-Value", "Storage", "Bitcask"],
+    "summary": {
+      "de": "Bitcask kombiniert append-only Datendateien mit einer vollständigen In-Memory-Hash-Tabelle, der Keydir.",
+      "en": "Bitcask combines append-only data files with a full in-memory hash table, the keydir."
+    },
+    "details": {
+      "de": ["Put und Delete hängen neue Einträge an.", "Get nutzt Keydir für Datei, Offset und Größe.", "Merging entfernt veraltete Versionen und Tombstones."],
+      "en": ["Put and delete append new entries.", "Get uses keydir for file, offset and size.", "Merging removes obsolete versions and tombstones."]
+    },
+    "examples": {
+      "de": ["put(k,A), put(k,B), delete(k) erzeugt drei physische Einträge; logisch existiert k danach nicht mehr."],
+      "en": ["put(k,A), put(k,B), delete(k) creates three physical entries; logically k no longer exists afterwards."]
+    },
+    "watchOut": {
+      "de": ["Bitcask ist stark für Point Queries, aber alle Keys müssen in den RAM passen."],
+      "en": ["Bitcask is strong for point queries, but all keys must fit in memory."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Was speichert Keydir?","en":"What does keydir store?"},"a":{"de":"Key → Datei, Offset, Value-Größe und Zeitstempel der neuesten Version.","en":"Key → file, offset, value size and timestamp of the newest version."}}
+    ],
+    "related": ["Keydir", "Tombstone", "Merge Process", "Hint File"]
+  },
+  "LSM-Tree": {
+    "tags": ["Key-Value", "LSM", "Storage"],
+    "summary": {
+      "de": "LSM-Trees sind write-optimierte Speicherstrukturen aus Memtables, WAL und sortierten SSTables.",
+      "en": "LSM-trees are write-optimized storage structures made of memtables, WAL and sorted SSTables."
+    },
+    "details": {
+      "de": ["Neue Writes gehen in Mutable Memtable und WAL.", "Flush schreibt eine Immutable Memtable nach Level 0.", "Compaction reorganisiert SSTables und entfernt alte Versionen."],
+      "en": ["New writes go to mutable memtable and WAL.", "Flush writes an immutable memtable to level 0.", "Compaction reorganizes SSTables and removes old versions."]
+    },
+    "examples": {
+      "de": ["Ein Get sucht Mutable Memtable, Immutable Memtable und dann SSTables ab Level 0."],
+      "en": ["A get searches mutable memtable, immutable memtable and then SSTables from level 0."]
+    },
+    "watchOut": {
+      "de": ["Level 0 darf überlappende Key-Bereiche enthalten; höhere Levels bei Leveling typischerweise nicht."],
+      "en": ["Level 0 may contain overlapping key ranges; higher levels under leveling typically do not."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Was ist der Unterschied zwischen Flush und Compaction?","en":"What is the difference between flush and compaction?"},"a":{"de":"Flush schreibt RAM-Daten erstmals als SSTable; Compaction verschmilzt/reorganisiert bestehende SSTables.","en":"Flush first writes RAM data as an SSTable; compaction merges/reorganizes existing SSTables."}}
+    ],
+    "related": ["Mutable Memtable", "SSTable", "Compaction", "Bloom Filter"]
+  },
+  "Bloom Filter": {
+    "tags": ["LSM", "Index", "Probability"],
+    "summary": {
+      "de": "Bloom-Filter reduzieren unnötige SSTable-Zugriffe, indem sie sicher ausschließen können, dass ein Key enthalten ist.",
+      "en": "Bloom filters reduce unnecessary SSTable accesses by safely excluding that a key is contained."
+    },
+    "details": {
+      "de": ["Kein False Negative: Wenn der Filter nein sagt, ist der Key sicher nicht enthalten.", "False Positives sind möglich: ja bedeutet nur vielleicht enthalten."],
+      "en": ["No false negatives: if the filter says no, the key is definitely absent.", "False positives are possible: yes only means maybe present."]
+    },
+    "examples": {
+      "de": ["Negativer Bloom-Filter-Test erlaubt, eine SSTable komplett zu überspringen."],
+      "en": ["A negative Bloom-filter test allows skipping an SSTable completely."]
+    },
+    "watchOut": {
+      "de": ["Ein positiver Bloom-Filter-Treffer ist kein Beweis, dass der Key existiert."],
+      "en": ["A positive Bloom-filter result is not proof that the key exists."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Welche Fehlerart darf ein Bloom-Filter nicht haben?","en":"Which error type must a Bloom filter not have?"},"a":{"de":"False Negatives.","en":"False negatives."}}
+    ],
+    "related": ["False Positive", "False Negative", "SSTable", "LSM-Tree"]
+  },
+  "Denormalization": {
+    "tags": ["Document", "Modelling", "Redundancy"],
+    "summary": {
+      "de": "Denormalisierung kopiert Daten bewusst redundant, um häufige Reads ohne Join oder zusätzliche Lookups zu beantworten.",
+      "en": "Denormalization intentionally copies data redundantly to answer frequent reads without joins or extra lookups."
+    },
+    "details": {
+      "de": ["Sie passt besonders zu hohem Read-to-Write-Verhältnis.", "Updates werden teurer und können über mehrere Dokumente nicht automatisch atomar sein.", "In Document Stores wird sie gezielt nach Zugriffsmuster eingesetzt."],
+      "en": ["It is especially useful with a high read-to-write ratio.", "Updates become more expensive and may not be atomic across documents.", "In document stores it is applied according to access patterns."]
+    },
+    "examples": {
+      "de": ["guest_name direkt in booking speichern, wenn die häufige Query Gäste pro Jahr ohne Join liefern soll."],
+      "en": ["Store guest_name directly in booking if the frequent query should list guests per year without a join."]
+    },
+    "watchOut": {
+      "de": ["Eine leere Liste [] ist nicht dasselbe wie ein fehlendes Feld."],
+      "en": ["An empty list [] is not the same as a missing field."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Wann ist Denormalisierung besonders attraktiv?","en":"When is denormalization especially attractive?"},"a":{"de":"Bei häufigen Reads und seltenen Updates der redundanten Daten.","en":"With frequent reads and rare updates of the redundant data."}}
+    ],
+    "related": ["Embedding", "Reference", "One-to-Few", "One-to-Millions"]
+  },
+  "Read Preference": {
+    "tags": ["MongoDB", "Replication", "Reads"],
+    "summary": {
+      "de": "Read Preference legt fest, von welchem Replica-Set-Mitglied MongoDB liest.",
+      "en": "Read preference defines which replica-set member MongoDB reads from."
+    },
+    "details": {
+      "de": ["primary ist der Default.", "secondary oder secondaryPreferred können Last vom Primary nehmen.", "nearest wählt nach Netzwerklatenz, nicht nach Aktualität."],
+      "en": ["primary is the default.", "secondary or secondaryPreferred can offload the primary.", "nearest chooses by network latency, not freshness."]
+    },
+    "watchOut": {
+      "de": ["Nicht mit Read Concern verwechseln: Preference beantwortet wo, Concern welche Sicht."],
+      "en": ["Do not confuse it with read concern: preference answers where, concern answers what visibility."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Was ist die Gefahr bei Reads von Secondaries?","en":"What is the risk of reads from secondaries?"},"a":{"de":"Sie können veraltete Daten liefern.","en":"They may return stale data."}}
+    ],
+    "related": ["Read Concern", "Write Concern", "Primary", "Secondary"]
+  },
+  "Cypher": {
+    "tags": ["Graph", "Query Language", "Pattern Matching"],
+    "summary": {
+      "de": "Cypher ist eine deklarative, pattern-basierte Abfragesprache für Property Graphs.",
+      "en": "Cypher is a declarative, pattern-based query language for property graphs."
+    },
+    "details": {
+      "de": ["MATCH findet Muster, WHERE filtert, RETURN projiziert.", "Beziehungsrichtung und Pfadlänge sind prüfungsrelevant.", "Aggregationen gruppieren implizit über nicht aggregierte Felder."],
+      "en": ["MATCH finds patterns, WHERE filters, RETURN projects.", "Relationship direction and path length are exam-relevant.", "Aggregations group implicitly by non-aggregate fields."]
+    },
+    "examples": {
+      "de": ["MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) RETURN c.name, a.code"],
+      "en": ["MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) RETURN c.name, a.code"]
+    },
+    "watchOut": {
+      "de": ["Ein einzelnes Pattern verwendet dieselbe Relationship nicht zweimal."],
+      "en": ["A single pattern does not use the same relationship twice."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Was zählt length(p)?","en":"What does length(p) count?"},"a":{"de":"Die Anzahl der Relationships im Pfad.","en":"The number of relationships in the path."}}
+    ],
+    "related": ["MATCH", "WHERE", "RETURN", "Variable-Length Path", "WITH"]
+  },
+  "MERGE": {
+    "tags": ["Cypher", "Updates", "Duplicates"],
+    "summary": {
+      "de": "MERGE matcht ein vollständiges Pattern oder erzeugt es, wenn kein Match existiert.",
+      "en": "MERGE matches a complete pattern or creates it if no match exists."
+    },
+    "details": {
+      "de": ["MERGE ist nicht automatisch ein Update nach Name.", "Alle im Pattern angegebenen Properties gehören zum Match.", "ON CREATE und ON MATCH erlauben unterschiedliche Aktionen."],
+      "en": ["MERGE is not automatically an update by name.", "All properties in the pattern are part of the match.", "ON CREATE and ON MATCH allow different actions."]
+    },
+    "watchOut": {
+      "de": ["MERGE (p:Person {name:'Alice', age:25}) kann einen zweiten Alice-Knoten erzeugen, wenn nur Alice ohne age existiert."],
+      "en": ["MERGE (p:Person {name:'Alice', age:25}) can create a second Alice node if only Alice without age exists."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Wie vermeidet man unerwartete Duplikate?","en":"How can unexpected duplicates be avoided?"},"a":{"de":"MERGE auf stabile eindeutige Schlüssel beschränken und weitere Properties mit SET setzen.","en":"MERGE on stable unique keys and set additional properties with SET."}}
+    ],
+    "related": ["CREATE", "Uniqueness Constraint", "Property", "Cypher"]
+  },
+  "Late Materialization": {
+    "tags": ["Column Store", "Execution", "Positions"],
+    "summary": {
+      "de": "Late Materialization rekonstruiert Tupel so spät wie möglich und trägt stattdessen Positionslisten durch die Ausführung.",
+      "en": "Late materialization reconstructs tuples as late as possible and carries position lists through execution instead."
+    },
+    "details": {
+      "de": ["Filter liefern Positionslisten.", "reconstruct lädt Werte nur für qualifizierte Positionen nach.", "Joins müssen die richtige Seite der Positionen weitertragen."],
+      "en": ["Filters produce position lists.", "reconstruct fetches values only for qualifying positions.", "Joins must carry the correct side of positions forward."]
+    },
+    "examples": {
+      "de": ["select(Ra,5,20) liefert Positionen, nicht Werte. Erst später wird Ra für die überlebenden Positionen rekonstruiert."],
+      "en": ["select(Ra,5,20) returns positions, not values. Ra is reconstructed later only for surviving positions."]
+    },
+    "watchOut": {
+      "de": ["posL und posR nach einem Join nicht vertauschen."],
+      "en": ["Do not confuse posL and posR after a join."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Warum ist Late Materialization nützlich?","en":"Why is late materialization useful?"},"a":{"de":"Sie erhält Spalten-, Kompressions- und Vektorisierungsvorteile länger.","en":"It preserves column, compression and vectorization advantages longer."}}
+    ],
+    "related": ["Position List", "reconstruct", "reverse", "voidTail", "Column Store"]
+  },
+  "Run-Length Encoding": {
+    "tags": ["Compression", "Column Store", "RLE"],
+    "summary": {
+      "de": "Run-Length Encoding speichert aufeinanderfolgende gleiche Werte als Wert plus Wiederholungszahl.",
+      "en": "Run-length encoding stores consecutive equal values as value plus repetition count."
+    },
+    "details": {
+      "de": ["Sehr gut bei langen Läufen.", "Schlecht bei häufig wechselnden oder eindeutigen Werten.", "Operationen wie SUM können teilweise direkt auf Runs arbeiten."],
+      "en": ["Very good for long runs.", "Bad for frequently alternating or unique values.", "Operations such as SUM can sometimes operate directly on runs."]
+    },
+    "watchOut": {
+      "de": ["RLE kann größer als andere Verfahren sein; es ist datenabhängig."],
+      "en": ["RLE can be larger than other methods; it depends on the data."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Wann passt RLE besonders gut?","en":"When does RLE fit especially well?"},"a":{"de":"Bei langen Sequenzen gleicher Werte, etwa sortierten Datumswerten.","en":"For long sequences of equal values, e.g. sorted dates."}}
+    ],
+    "related": ["Dictionary Encoding", "Bit-Vector Encoding", "Compression"]
+  },
+  "Bigtable": {
+    "tags": ["Wide Column Store", "Bigtable", "Distributed Storage"],
+    "summary": {
+      "de": "Bigtable ist eine verteilte, sparse und versionierte Map, adressiert durch Row Key, Column und Timestamp.",
+      "en": "Bigtable is a distributed, sparse and versioned map addressed by row key, column and timestamp."
+    },
+    "details": {
+      "de": ["Rows sind lexikografisch nach Row Key sortiert.", "Tablets gruppieren benachbarte Rows und sind Verteilungseinheiten.", "Column Families sind der explizite Schemakern."],
+      "en": ["Rows are sorted lexicographically by row key.", "Tablets group neighboring rows and are distribution units.", "Column families are the explicit schema core."]
+    },
+    "examples": {
+      "de": ["(row key, family:qualifier, timestamp) → value"],
+      "en": ["(row key, family:qualifier, timestamp) → value"]
+    },
+    "watchOut": {
+      "de": ["Column Family und Column Qualifier nicht verwechseln."],
+      "en": ["Do not confuse column family and column qualifier."]
+    },
+    "examQuestions": [
+      {"q":{"de":"Was ist ein Tablet?","en":"What is a tablet?"},"a":{"de":"Eine Gruppe aufeinanderfolgender Rows und Einheit von Verteilung und Load Balancing.","en":"A group of consecutive rows and the unit of distribution and load balancing."}}
+    ],
+    "related": ["Row Key", "Tablet", "Column Family", "Timestamp", "SSTable"]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "label": "Beispiel für zusätzliche KI-Fragen",
+  "questions": [
+    {
+      "id": "custom-nosql-example-001",
+      "topic": "nosql",
+      "difficulty": 3,
+      "status": "active",
+      "languages": ["de", "en"],
+      "prompt": {
+        "de": "Welche Aussagen sind korrekt?",
+        "en": "Which statements are correct?"
+      },
+      "context": {
+        "de": "Optionaler Kontext, Formeln, Daten oder ein kleines Schema.",
+        "en": "Optional context, formulas, data or a small schema."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "de": "Erste Aussage",
+            "en": "First statement"
+          },
+          "correct": true,
+          "explanation": {
+            "de": "Kurze Begründung nur für diese Option.",
+            "en": "Short explanation for this option."
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "de": "Zweite Aussage",
+            "en": "Second statement"
+          },
+          "correct": false,
+          "explanation": {
+            "de": "Warum diese Aussage nicht gilt.",
+            "en": "Why this statement is false."
+          }
+        }
+      ],
+      "explanation": {
+        "de": "Übergreifende Erklärung der vollständigen Lösung.",
+        "en": "Overall explanation of the complete solution."
+      },
+      "source": {
+        "deck": "Eigene Quelle",
+        "pages": "S. 1–2"
+      },
+      "tags": ["Beispiel", "Import"]
+    }
+  ]
+}

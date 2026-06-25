@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "label": "NoSQL & verteilte Konsistenz",
+  "questions": [
+    {
+      "id": "nosql-001",
+      "topic": "nosql",
+      "difficulty": 1,
+      "prompt": "Welche Zuordnungen von NoSQL-Kategorie und zentralem Merkmal sind korrekt?",
+      "options": [
+        {"id":"a","text":"Key-Value Stores behandeln den Wert typischerweise als für das DBMS opake Bytefolge.","correct":true,"explanation":"Die Semantik des Werts liegt primär bei der Anwendung."},
+        {"id":"b","text":"Document Stores können Felder innerhalb eines Dokuments verstehen und filtern.","correct":true,"explanation":"Gerade das unterscheidet sie von reinen Key-Value Stores."},
+        {"id":"c","text":"Graphdatenbanken behandeln Beziehungen nur als abgeleitete Metadaten ohne eigenen Typ oder Properties.","correct":false,"explanation":"Beziehungen sind First-Class Citizens und können Typ sowie Properties besitzen."},
+        {"id":"d","text":"Wide Column Stores adressieren Werte typischerweise über mehr als nur einen einfachen Schlüssel.","correct":true,"explanation":"Bigtable verwendet Row Key, Column und Timestamp."}
+      ],
+      "explanation": "Die Kategorien unterscheiden sich darin, welche Struktur das DBMS versteht und für Zugriffe optimiert.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 18–23"},
+      "tags": ["Kategorien","Grundlagen"]
+    },
+    {
+      "id": "nosql-002",
+      "topic": "nosql",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen über Aggregate in NoSQL-Systemen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Ein Aggregat kann Einheit von Zugriff, Update und Verteilung sein.","correct":true,"explanation":"Das ist die zentrale Idee der Aggregate Orientation."},
+        {"id":"b","text":"Atomare Änderungen eines einzelnen Aggregats sind oft leichter als atomare Änderungen über mehrere Aggregate.","correct":true,"explanation":"Aggregatgrenzen bilden häufig auch Transaktionsgrenzen."},
+        {"id":"c","text":"Eine einmal gewählte Aggregatgrenze ist für alle Workloads gleichermaßen optimal.","correct":false,"explanation":"Verschiedene Zugriffsmuster können widersprüchliche Grenzen bevorzugen."},
+        {"id":"d","text":"Graphdatenbanken gelten typischerweise als aggregate-ignorant.","correct":true,"explanation":"Ihre Information steckt stark in den Beziehungen zwischen kleinen Entitäten."}
+      ],
+      "explanation": "Aggregate optimieren gemeinsam verwendete Daten, erzeugen aber Trade-offs bei anderen Zugriffspfaden.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 20–26"},
+      "tags": ["Aggregate","Modellierung"]
+    },
+    {
+      "id": "nosql-003",
+      "topic": "nosql",
+      "difficulty": 2,
+      "prompt": "Welche Aussagen zu Sharding und Replikation sind korrekt?",
+      "options": [
+        {"id":"a","text":"Sharding verteilt unterschiedliche Datenbereiche auf mehrere Knoten.","correct":true,"explanation":"Es entspricht ungefähr horizontaler Fragmentierung."},
+        {"id":"b","text":"Replikation hält mehrere Kopien derselben Daten.","correct":true,"explanation":"Replikate verbessern unter anderem Ausfallsicherheit und Leseleistung."},
+        {"id":"c","text":"Primary-Secondary-Replikation erlaubt standardmäßig jedem Secondary unabhängige Writes auf dasselbe Objekt.","correct":false,"explanation":"Writes werden über den Primary verarbeitet."},
+        {"id":"d","text":"Peer-to-Peer-Replikation kann zusätzliche Write-Write-Konflikte erzeugen.","correct":true,"explanation":"Parallele Writes auf verschiedenen Knoten können kollidieren."}
+      ],
+      "explanation": "Sharding und Replikation lösen unterschiedliche Probleme und können gemeinsam eingesetzt werden.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 30–33"},
+      "tags": ["Verteilung","Replikation"]
+    },
+    {
+      "id": "nosql-004",
+      "topic": "nosql",
+      "difficulty": 1,
+      "prompt": "Welche Aussagen beschreiben BASE korrekt?",
+      "options": [
+        {"id":"a","text":"Basically Available bedeutet, dass das System im Wesentlichen verfügbar erscheint.","correct":true,"explanation":"Das ist BA in BASE."},
+        {"id":"b","text":"Soft State erlaubt vorübergehend unterschiedliche Zustände auf Replikaten.","correct":true,"explanation":"Der Zustand muss nicht jederzeit vollständig konsistent sein."},
+        {"id":"c","text":"Eventual Consistency garantiert eine feste maximale Konvergenzzeit.","correct":false,"explanation":"Eine konkrete Zeitgrenze ist nicht Teil der Garantie."},
+        {"id":"d","text":"Ohne weitere Updates sollen Replikate schließlich konvergieren.","correct":true,"explanation":"Genau das bedeutet Eventual Consistency."}
+      ],
+      "explanation": "BASE formuliert bewusst schwächere, verteilungsfreundliche Garantien als vollständiges ACID.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folie 36"},
+      "tags": ["BASE","Konsistenz"]
+    },
+    {
+      "id": "nosql-005",
+      "topic": "nosql",
+      "difficulty": 3,
+      "prompt": "Welche Aussagen verwenden die CAP-Begriffe in der Definition der Vorlesung korrekt?",
+      "options": [
+        {"id":"a","text":"Availability verlangt eine Antwort auf jede Anfrage an einen nicht ausgefallenen Knoten.","correct":true,"explanation":"Das ist die präzise Definition in den Folien."},
+        {"id":"b","text":"Consistency bedeutet Single-Copy Consistency.","correct":true,"explanation":"Das System verhält sich wie eine einzelne, sequenziell verarbeitete Kopie."},
+        {"id":"c","text":"Partition Tolerance bedeutet, dass niemals eine Netzwerkpartition auftreten darf.","correct":false,"explanation":"Das System soll trotz Partition weiterarbeiten."},
+        {"id":"d","text":"Ein System ist im CAP-Sinn verfügbar, sobald wenigstens ein beliebiger Clusterknoten läuft.","correct":false,"explanation":"Das ist deutlich schwächer als CAP-Availability."}
+      ],
+      "explanation": "Viele CAP-Fehler entstehen durch unpräzise Alltagsdefinitionen von Verfügbarkeit und Konsistenz.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 37–39"},
+      "tags": ["CAP","Definitionen"]
+    },
+    {
+      "id": "nosql-006",
+      "topic": "nosql",
+      "difficulty": 3,
+      "prompt": "Welche Schlussfolgerungen aus CAP und PACELC sind korrekt?",
+      "options": [
+        {"id":"a","text":"Da Netzwerkpartitionen nicht sicher ausgeschlossen werden können, ist AP versus CP die praktisch relevante CAP-Entscheidung.","correct":true,"explanation":"CA würde bei Partition den Betrieb einstellen."},
+        {"id":"b","text":"PACELC betrachtet zusätzlich den Trade-off zwischen Latenz und Konsistenz, wenn keine Partition besteht.","correct":true,"explanation":"Das ist der EL/C-Teil."},
+        {"id":"c","text":"PA/EC bevorzugt bei Partition Consistency und sonst Latenz.","correct":false,"explanation":"PA bedeutet Availability bei Partition; EC bedeutet Consistency im Else-Fall."},
+        {"id":"d","text":"CAP fordert, dass ein System dauerhaft exakt zwei der drei Eigenschaften wählen muss, unabhängig vom Betriebszustand.","correct":false,"explanation":"Der kritische Trade-off gilt im Partitionierungsfall; Ausprägungen sind zudem nicht rein binär."}
+      ],
+      "explanation": "PACELC trennt den Partitionierungsfall vom normalen Betrieb.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 38–40"},
+      "tags": ["CAP","PACELC"]
+    },
+    {
+      "id": "nosql-007",
+      "topic": "nosql",
+      "difficulty": 3,
+      "prompt": "Ein System hat Replikationsfaktor N = 7. Welche (R,W)-Paare erfüllen beide Quorum-Bedingungen?",
+      "context": "Erforderlich sind 2W > N und R + W > N.",
+      "options": [
+        {"id":"a","text":"R = 3, W = 4","correct":false,"explanation":"2W=8>7, aber R+W=7 ist nicht größer als 7."},
+        {"id":"b","text":"R = 4, W = 4","correct":true,"explanation":"8>7 und 8>7."},
+        {"id":"c","text":"R = 2, W = 6","correct":true,"explanation":"12>7 und 8>7."},
+        {"id":"d","text":"R = 6, W = 2","correct":false,"explanation":"R+W=8, aber 2W=4 ist nicht größer als 7."}
+      ],
+      "explanation": "Beide Ungleichungen müssen unabhängig geprüft werden.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 41–42"},
+      "tags": ["Quorum","Rechnung"]
+    },
+    {
+      "id": "nosql-008",
+      "topic": "nosql",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen zu Quorum Consensus sind korrekt?",
+      "options": [
+        {"id":"a","text":"ROWA verwendet R = 1 und W = N.","correct":true,"explanation":"Read One, Write All."},
+        {"id":"b","text":"Die Bedingung R + W > N garantiert, dass ein Read mindestens ein am letzten Write beteiligtes Replikat erreicht.","correct":true,"explanation":"Read- und Write-Quorum müssen sich schneiden."},
+        {"id":"c","text":"Die Bedingung 2W > N verhindert, dass zwei Write-Quoren disjunkt sind.","correct":true,"explanation":"Zwei Mengen mit jeweils mehr als N/2 Elementen überlappen."},
+        {"id":"d","text":"Bei erfüllten Quorum-Bedingungen sind Version Stamps grundsätzlich überflüssig.","correct":false,"explanation":"Innerhalb eines Read-Quorums muss die neueste Version weiterhin erkannt werden."}
+      ],
+      "explanation": "Quoren sichern Überlappung; Versionierung identifiziert den aktuellen Wert.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 41–43"},
+      "tags": ["Quorum","Versionierung"]
+    },
+    {
+      "id": "nosql-009",
+      "topic": "nosql",
+      "difficulty": 2,
+      "prompt": "Welche Regeln für Lamport-Uhren sind korrekt?",
+      "options": [
+        {"id":"a","text":"Vor einem Send erhöht der Sender seinen lokalen Zähler.","correct":true,"explanation":"Der erhöhte Wert wird an die Nachricht angehängt."},
+        {"id":"b","text":"Beim Empfang von Zeitstempel t wird der lokale Zähler auf max(local,t)+1 gesetzt.","correct":true,"explanation":"So liegt der Receive logisch nach dem Send."},
+        {"id":"c","text":"Gleiche Lamport-Zeitstempel auf zwei Prozessen beweisen, dass es sich um dasselbe Ereignis handelt.","correct":false,"explanation":"Unabhängige Ereignisse können denselben skalaren Wert tragen."},
+        {"id":"d","text":"Aus C(e) < C(e') folgt immer e → e'.","correct":false,"explanation":"Lamport-Uhren erfüllen nur die andere Implikationsrichtung."}
+      ],
+      "explanation": "Lamport-Zeitstempel respektieren Kausalität, erkennen sie aber nicht vollständig.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 44–46"},
+      "tags": ["Lamport","Regeln"]
+    },
+    {
+      "id": "nosql-010",
+      "topic": "nosql",
+      "difficulty": 4,
+      "prompt": "Welche Werte entstehen in diesem Lamport-Ablauf?",
+      "context": "Start: A=2, B=5. A sendet m1 an B. Danach sendet B m2 an A. Es gibt keine weiteren Ereignisse.",
+      "options": [
+        {"id":"a","text":"m1 trägt Zeitstempel 3.","correct":true,"explanation":"A erhöht vor dem Send 2→3."},
+        {"id":"b","text":"B steht nach Empfang von m1 auf 6.","correct":true,"explanation":"max(5,3)+1=6."},
+        {"id":"c","text":"m2 trägt Zeitstempel 7.","correct":true,"explanation":"B erhöht vor seinem Send 6→7."},
+        {"id":"d","text":"A steht nach Empfang von m2 auf 7.","correct":false,"explanation":"max(3,7)+1=8."}
+      ],
+      "explanation": "Jeder Send erhöht zuerst; jeder Receive verwendet max plus eins.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 44–45"},
+      "tags": ["Lamport","Ablauf"]
+    },
+    {
+      "id": "nosql-011",
+      "topic": "nosql",
+      "difficulty": 4,
+      "prompt": "Welche Aussagen über schwache und starke Clock Property sind korrekt?",
+      "options": [
+        {"id":"a","text":"Lamport-Uhren erfüllen e→e' ⇒ C(e)<C(e').","correct":true,"explanation":"Das ist die schwache Clock Property."},
+        {"id":"b","text":"Lamport-Uhren erfüllen C(e)<C(e') ⇒ e→e'.","correct":false,"explanation":"Unabhängige Ereignisfolgen können geordnete Skalare erhalten."},
+        {"id":"c","text":"Vektoruhren erfüllen e→e' genau dann, wenn VC(e)<VC(e').","correct":true,"explanation":"Sie erfüllen die starke Clock Property."},
+        {"id":"d","text":"Nebenläufige Ereignisse erhalten bei Vektoruhren notwendigerweise identische Vektoren.","correct":false,"explanation":"Sie erhalten typischerweise unvergleichbare, nicht identische Vektoren."}
+      ],
+      "explanation": "Der entscheidende Vorteil von Vektoruhren ist die Erkennbarkeit von Kausalität und Nebenläufigkeit.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 46–49"},
+      "tags": ["Clock Property","Kausalität"]
+    },
+    {
+      "id": "nosql-012",
+      "topic": "nosql",
+      "difficulty": 5,
+      "prompt": "Welche Vergleiche der folgenden Vektoruhren sind korrekt?",
+      "context": "x=(3,2,5), y=(3,4,5), z=(4,1,6), w=(3,4,6). Vergleich ist komponentenweise.",
+      "options": [
+        {"id":"a","text":"x < y","correct":true,"explanation":"Alle Komponenten von x sind ≤ y und die zweite ist strikt kleiner."},
+        {"id":"b","text":"y < w","correct":true,"explanation":"Nur die dritte Komponente wächst von 5 auf 6."},
+        {"id":"c","text":"x < z","correct":false,"explanation":"x hat in der zweiten Komponente 2>1; die Vektoren sind unvergleichbar."},
+        {"id":"d","text":"z und w sind unvergleichbar.","correct":true,"explanation":"z ist in Komponente 1 größer, w in Komponente 2."}
+      ],
+      "explanation": "Für < müssen alle Komponenten ≤ sein und mindestens eine strikt <. Kreuzende Komponenten bedeuten Unvergleichbarkeit.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folie 49"},
+      "tags": ["Vektoruhren","Vergleich"]
+    },
+    {
+      "id": "nosql-013",
+      "topic": "nosql",
+      "difficulty": 5,
+      "prompt": "Prozess B mit Vektoruhr (2,5,1) empfängt von A eine Nachricht mit (4,3,2). Welche Aussagen sind korrekt?",
+      "options": [
+        {"id":"a","text":"Nach dem komponentenweisen Maximum, aber vor dem lokalen Increment, steht B auf (4,5,2).","correct":true,"explanation":"Maximum je Komponente: (4,5,2)."},
+        {"id":"b","text":"Nach dem vollständigen Receive steht B auf (4,6,2).","correct":true,"explanation":"B erhöht anschließend seine zweite, eigene Komponente."},
+        {"id":"c","text":"B muss seine erste Komponente erhöhen, weil die Nachricht von A kam.","correct":false,"explanation":"Der Empfänger erhöht immer seine eigene Komponente."},
+        {"id":"d","text":"Der neue Vektor ist kleiner als der empfangene Vektor.","correct":false,"explanation":"Er ist komponentenweise größer oder gleich und in B-Komponente strikt größer."}
+      ],
+      "explanation": "Receive: erst komponentenweises Maximum, dann Increment der Empfängerkomponente.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 47–49"},
+      "tags": ["Vektoruhren","Receive"]
+    },
+    {
+      "id": "nosql-014",
+      "topic": "nosql",
+      "difficulty": 3,
+      "prompt": "Welche Zuordnungen von Session-Garantie und Bedeutung sind korrekt?",
+      "options": [
+        {"id":"a","text":"Read-Your-Writes: Nach eigenem Write wird mindestens dieser Stand gelesen.","correct":true,"explanation":"Eigene Writes verschwinden für die Session nicht."},
+        {"id":"b","text":"Monotonic Reads: Eine Session liest später keine ältere Version als zuvor.","correct":true,"explanation":"Gelesene Versionen gehen monoton vorwärts."},
+        {"id":"c","text":"Monotonic Writes: Writes derselben Session dürfen von anderen in beliebiger Reihenfolge gesehen werden.","correct":false,"explanation":"Gerade ihre Reihenfolge soll erhalten bleiben."},
+        {"id":"d","text":"Writes-Follow-Reads erhält kausale Abhängigkeiten zwischen einem Read und einem folgenden Write.","correct":true,"explanation":"Wer den späteren Write sieht, soll auch den verursachenden Read-Stand oder neuer sehen."}
+      ],
+      "explanation": "Diese Garantien sind konkrete Ausprägungen kausaler beziehungsweise sessionbezogener Konsistenz.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folie 35"},
+      "tags": ["Session Guarantees","Kausalität"]
+    },
+    {
+      "id": "nosql-015",
+      "topic": "nosql",
+      "difficulty": 5,
+      "prompt": "Ein System hat Replikationsfaktor N = 8. Welche der folgenden Quorum-Konfigurationen erfüllen beide Bedingungen?",
+      "context": "Erforderlich sind 2W > N und R + W > N. Es kann sein, dass keine Option korrekt ist.",
+      "options": [
+        {"id":"a","text":"R = 4, W = 4","correct":false,"explanation":"2W=8 ist nicht strikt größer als 8; außerdem ist R+W nur 8."},
+        {"id":"b","text":"R = 5, W = 4","correct":false,"explanation":"R+W=9 passt, aber 2W=8 ist nicht strikt größer als 8."},
+        {"id":"c","text":"R = 3, W = 5","correct":false,"explanation":"2W=10 passt, aber R+W=8 ist nicht strikt größer als 8."},
+        {"id":"d","text":"R = 1, W = 7","correct":false,"explanation":"2W=14 passt, aber R+W=8 ist nicht strikt größer als 8."}
+      ],
+      "explanation": "Keine Option ist korrekt. Gerade bei geradem N sind die strikt-großen Ungleichungen eine häufige Prüfungsfalle.",
+      "source": {"deck":"ADBS-NoSQL.pdf","pages":"Folien 41–42"},
+      "tags": ["Quorum","Keine Option"]
+    }
+  ]
+}
