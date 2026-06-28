@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "id": "air",
+  "code": "AIR",
+  "title": "Advanced Information Retrieval",
+  "university": "TU Wien",
+  "degree": "Masterstudium",
+  "semester": "Sommersemester 2026",
+  "description": "Inverted Indexing, IR-Evaluation, Test Collections, Neural IR, Transformers, Dense Retrieval und Paper-basierte Relevance-Judgment-Analyse.",
+  "color": "#35c2b5",
+  "status": "active",
+  "defaultExamId": "final-2026",
+  "exams": [
+    {
+      "id": "final-2026",
+      "title": "AIR Exam Prep · Lectures + Paper",
+      "date": null,
+      "provider": "json-v1",
+      "contentPath": "exams/final-2026/content.json"
+    }
+  ]
+}

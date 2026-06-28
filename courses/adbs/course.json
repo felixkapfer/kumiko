@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "id": "adbs",
+  "code": "ADBS",
+  "title": "Advanced Database Systems",
+  "university": "TU Wien",
+  "degree": "Masterstudium",
+  "semester": "Sommersemester 2026",
+  "description": "NoSQL, verteilte Konsistenz, Key-Value-, Dokument-, Graph- und Column-Stores.",
+  "color": "#b8f34a",
+  "status": "active",
+  "defaultExamId": "practical-test-3-2026",
+  "exams": [
+    {
+      "id": "practical-test-3-2026",
+      "title": "Practical Test 3 · 2026",
+      "date": null,
+      "provider": "adbs-legacy"
+    }
+  ]
+}
