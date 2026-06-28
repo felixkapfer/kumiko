@@ -1,7 +1,7 @@
 [project]
-name = "adbs-exam-prep"
-version = "1.0.0"
-description = "Lokale Lern-App für die ADBS-Prüfung"
+name = "kumiko-study"
+version = "0.2.0"
+description = "Modulare Lernplattform für Kurse und Klausuren"
 requires-python = ">=3.11"
 dependencies = []
 
