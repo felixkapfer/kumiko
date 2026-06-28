@@ -1,0 +1,221 @@
+.chapter-progress {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 1fr);
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chapter-deep-dive,
+.chapter-question-section {
+  padding: 30px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.concept-study-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.concept-study-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.concept-study-card h4 {
+  margin: 0 0 8px;
+  color: var(--topic-color);
+  font-size: 15px;
+}
+
+.concept-study-card > p {
+  margin: 0;
+  color: #c8d0d5;
+  font-size: 13px;
+}
+
+.concept-takeaway {
+  margin: 14px 0;
+  padding: 11px 12px;
+  border-left: 3px solid var(--topic-color);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--topic-color) 6%, transparent);
+  color: #d9e0e3;
+  font-size: 12px;
+}
+
+.concept-takeaway span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.chapter-question-list {
+  display: grid;
+  gap: 7px;
+}
+
+.chapter-question-list button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel-2);
+  color: #cbd3d7;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chapter-question-list button:hover {
+  border-color: var(--topic-color);
+}
+
+.chapter-question-list button span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--topic-color) 10%, transparent);
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.chapter-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 27px;
+}
+
+.chapter-pagination button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.summary-section {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.38fr) minmax(0, 1fr);
+  gap: 28px;
+  padding: 27px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.summary-section:last-child {
+  border-bottom: 0;
+}
+
+.summary-section > h3 {
+  color: var(--topic-color);
+  font-size: 15px;
+}
+
+.summary-section p,
+.summary-section li {
+  color: #c3cbd0;
+}
+
+.summary-section ul,
+.check-list {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.summary-section li + li {
+  margin-top: 7px;
+}
+
+.detail-lead {
+  margin-top: 0;
+  color: var(--text) !important;
+  font-size: 16px;
+}
+
+.example-box,
+.pitfall-box,
+.formula-box {
+  margin-top: 16px;
+  padding: 15px 17px;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 10px 10px 0;
+  background: rgba(120, 169, 255, 0.07);
+  color: #c9d6ef;
+  font-size: 13px;
+}
+
+.pitfall-box {
+  border-left-color: var(--amber);
+  background: rgba(242, 187, 87, 0.07);
+  color: #eedab4;
+}
+
+.exam-answer-list {
+  display: grid;
+  gap: 13px;
+}
+
+.exam-answer-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.exam-answer-card > strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.model-answer {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-left: 3px solid var(--topic-color);
+  border-radius: 0 9px 9px 0;
+  background: color-mix(in srgb, var(--topic-color) 6%, transparent);
+}
+
+.model-answer span {
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.model-answer p {
+  margin: 6px 0 0;
+}
+
+.ghost-button.compact {
+  margin-top: 12px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.source-note {
+  margin-bottom: 0;
+  color: var(--muted-2) !important;
+  font-size: 12px;
+}
+
+.formula-box {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  color: #dff8b1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+

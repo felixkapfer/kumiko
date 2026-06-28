@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 
 import {
   buildExam,
+  buildSplitExam,
   exactMatch,
   questionStatus,
   scoreExam,
+  scoreQuestion,
   selectQuestions,
   updateProgress,
 } from "../engine.mjs";
@@ -85,6 +87,36 @@ test("exam generation respects requested maximum and spreads topics", () => {
   assert.equal(new Set(exam.map((question) => question.topic)).size, 3);
 });
 
+test("split exam generation respects configured topic groups", () => {
+  const questions = [
+    ...Array.from({ length: 8 }, (_, index) => ({
+      id: `p${index}`,
+      topic: "paper",
+      difficulty: 3,
+      options,
+    })),
+    ...Array.from({ length: 8 }, (_, index) => ({
+      id: `l${index}`,
+      topic: index % 2 ? "lecture-a" : "lecture-b",
+      difficulty: 3,
+      options,
+    })),
+  ];
+  const exam = buildSplitExam(
+    questions,
+    10,
+    [
+      { topicIds: ["paper"], ratio: 0.5 },
+      { excludeTopicIds: ["paper"], ratio: 0.5 },
+    ],
+    () => 0.42,
+  );
+
+  assert.equal(exam.length, 10);
+  assert.equal(exam.filter((question) => question.topic === "paper").length, 5);
+  assert.equal(exam.filter((question) => question.topic !== "paper").length, 5);
+});
+
 test("scoreExam awards one point only for exact selections", () => {
   const questions = [
     { id: "q1", options },
@@ -101,5 +133,62 @@ test("scoreExam awards one point only for exact selections", () => {
       percentage: result.percentage,
     },
     { points: 1, maximum: 2, percentage: 50 },
+  );
+});
+
+test("scoreQuestion supports signed selection scoring", () => {
+  const question = { id: "q1", options };
+  const result = scoreQuestion(question, ["a", "b"], {
+    type: "signed-selection",
+    correctSelected: 1,
+    incorrectSelected: -1,
+  });
+
+  assert.deepEqual(
+    {
+      points: result.points,
+      maximum: result.maximum,
+      correct: result.correct,
+      selectedCorrect: result.selectedCorrect,
+      selectedIncorrect: result.selectedIncorrect,
+      missedCorrect: result.missedCorrect,
+    },
+    {
+      points: 0,
+      maximum: 2,
+      correct: false,
+      selectedCorrect: 1,
+      selectedIncorrect: 1,
+      missedCorrect: 1,
+    },
+  );
+});
+
+test("scoreExam sums signed selection points and maximum", () => {
+  const questions = [
+    { id: "q1", options },
+    { id: "q2", options },
+  ];
+  const result = scoreExam(
+    questions,
+    {
+      q1: ["a", "c"],
+      q2: ["a", "b"],
+    },
+    {
+      type: "signed-selection",
+      correctSelected: 1,
+      incorrectSelected: -1,
+    },
+  );
+
+  assert.deepEqual(
+    {
+      points: result.points,
+      maximum: result.maximum,
+      percentage: result.percentage,
+      correct: result.details.map((entry) => entry.correct),
+    },
+    { points: 2, maximum: 4, percentage: 50, correct: [true, false] },
   );
 });

@@ -25,6 +25,53 @@ export function exactMatch(selectedIds, options) {
   return [...expected].every((id) => selected.has(id));
 }
 
+export function scoreQuestion(question, selectedIds = [], scoring = {}) {
+  const options = question.options || [];
+  const type = scoring?.type || "exact-match";
+  const selected = new Set(selectedIds);
+  const correctOptions = options.filter((option) => option.correct);
+  const selectedCorrect = options.filter(
+    (option) => option.correct && selected.has(option.id),
+  ).length;
+  const selectedIncorrect = options.filter(
+    (option) => !option.correct && selected.has(option.id),
+  ).length;
+  const missedCorrect = correctOptions.length - selectedCorrect;
+
+  if (type === "signed-selection") {
+    const correctSelectedPoints = Number(scoring.correctSelected ?? 1);
+    const incorrectSelectedPoints = Number(scoring.incorrectSelected ?? -1);
+    const points =
+      selectedCorrect * correctSelectedPoints +
+      selectedIncorrect * incorrectSelectedPoints;
+    const maximum = correctOptions.length * correctSelectedPoints;
+    const correct =
+      missedCorrect === 0 &&
+      selectedIncorrect === 0 &&
+      points === maximum;
+    return {
+      id: question.id,
+      correct,
+      points,
+      maximum,
+      selectedCorrect,
+      selectedIncorrect,
+      missedCorrect,
+    };
+  }
+
+  const correct = exactMatch(selectedIds, options);
+  return {
+    id: question.id,
+    correct,
+    points: correct ? 1 : 0,
+    maximum: 1,
+    selectedCorrect,
+    selectedIncorrect,
+    missedCorrect,
+  };
+}
+
 export function updateProgress(previous = {}, correct, now = Date.now()) {
   const attempts = (previous.attempts || 0) + 1;
   const oldBox = previous.box || 0;
@@ -124,17 +171,83 @@ export function buildExam(questions, count, random = Math.random) {
   return shuffle(selected, random);
 }
 
-export function scoreExam(questions, answers) {
-  const details = questions.map((question) => ({
-    id: question.id,
-    correct: exactMatch(answers[question.id] || [], question.options),
-  }));
-  const points = details.filter((entry) => entry.correct).length;
+function questionMatchesExamGroup(question, group) {
+  const topicIds = new Set(group.topicIds || []);
+  const excludeTopicIds = new Set(group.excludeTopicIds || []);
+  if (topicIds.size && !topicIds.has(question.topic)) return false;
+  if (excludeTopicIds.has(question.topic)) return false;
+  return true;
+}
+
+export function buildSplitExam(
+  questions,
+  count,
+  groups = [],
+  random = Math.random,
+) {
+  const limit = Math.min(Math.max(Number(count) || 0, 0), questions.length);
+  if (!limit || !groups.length) return buildExam(questions, limit, random);
+
+  const selected = [];
+  const selectedIds = new Set();
+  const targets = [];
+  let assignedTarget = 0;
+
+  groups.forEach((group, index) => {
+    const isLast = index === groups.length - 1;
+    const rawTarget =
+      group.count !== undefined
+        ? Number(group.count)
+        : isLast
+          ? limit - assignedTarget
+          : Math.round(limit * Number(group.ratio || 0));
+    const target = Math.max(
+      0,
+      Math.min(limit - assignedTarget, Number.isFinite(rawTarget) ? rawTarget : 0),
+    );
+    targets.push(target);
+    assignedTarget += target;
+  });
+
+  if (assignedTarget < limit && targets.length) {
+    targets[targets.length - 1] += limit - assignedTarget;
+  }
+
+  groups.forEach((group, index) => {
+    const bucket = questions.filter(
+      (question) =>
+        !selectedIds.has(question.id) && questionMatchesExamGroup(question, group),
+    );
+    for (const question of buildExam(bucket, targets[index], random)) {
+      if (!selectedIds.has(question.id)) {
+        selected.push(question);
+        selectedIds.add(question.id);
+      }
+    }
+  });
+
+  if (selected.length < limit) {
+    const remaining = questions.filter((question) => !selectedIds.has(question.id));
+    for (const question of buildExam(remaining, limit - selected.length, random)) {
+      selected.push(question);
+      selectedIds.add(question.id);
+    }
+  }
+
+  return shuffle(selected, random);
+}
+
+export function scoreExam(questions, answers, scoring = {}) {
+  const details = questions.map((question) =>
+    scoreQuestion(question, answers[question.id] || [], scoring),
+  );
+  const points = details.reduce((sum, entry) => sum + entry.points, 0);
+  const maximum = details.reduce((sum, entry) => sum + entry.maximum, 0);
   return {
     points,
-    maximum: questions.length,
-    percentage: questions.length
-      ? Math.round((points / questions.length) * 100)
+    maximum,
+    percentage: maximum
+      ? Math.round((points / maximum) * 100)
       : 0,
     details,
   };

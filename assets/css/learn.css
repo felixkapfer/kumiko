@@ -1,0 +1,429 @@
+.learn-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 25px;
+  align-items: start;
+}
+
+.learn-sidebar {
+  position: sticky;
+  top: 22px;
+  display: grid;
+  gap: 20px;
+  max-height: calc(100vh - 44px);
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.topic-tabs {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  height: max-content;
+}
+
+.sidebar-section-label {
+  margin: 0 0 5px;
+  color: var(--muted-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.topic-tab {
+  padding: 12px 13px;
+  color: var(--muted);
+  text-align: left;
+}
+
+.topic-tab.active {
+  border-color: var(--topic-color, var(--accent));
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.chapter-nav {
+  display: grid;
+  gap: 4px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.chapter-nav button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.chapter-nav button:hover,
+.chapter-nav button.active {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.chapter-nav button.active {
+  border-color: color-mix(in srgb, var(--topic-color) 40%, var(--line));
+}
+
+.chapter-nav button span {
+  color: var(--topic-color, var(--accent));
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.summary-card {
+  overflow: hidden;
+}
+
+.summary-hero {
+  padding: clamp(25px, 4vw, 44px);
+  border-bottom: 1px solid var(--line-soft);
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--topic-color) 12%, transparent), transparent 55%),
+    var(--panel);
+}
+
+.topic-kicker {
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary-hero > p {
+  max-width: 850px;
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.focus-chips,
+.filter-chips,
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.focus-chips {
+  margin-top: 22px;
+}
+
+.study-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 23px;
+}
+
+.study-stats span {
+  padding: 8px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.13);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.study-stats strong {
+  color: var(--topic-color);
+}
+
+.chip {
+  padding: 6px 10px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+button.chip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.summary-body {
+  padding: clamp(22px, 4vw, 42px);
+}
+
+.paper-meta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.5fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.paper-meta-row > div {
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: var(--panel-2);
+}
+
+.paper-meta-row span,
+.paper-notes-header .eyebrow {
+  color: var(--muted-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.paper-meta-row strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.paper-reader-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.paper-pdf-panel,
+.paper-notes-panel {
+  min-width: 0;
+}
+
+.paper-reader-frame {
+  width: 100%;
+  min-height: min(78vh, 820px);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0f1215;
+}
+
+.paper-pdf-panel .secondary-button {
+  margin-top: 10px;
+}
+
+.paper-notes-panel {
+  position: sticky;
+  top: 18px;
+  max-height: min(78vh, 820px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel-2);
+}
+
+.paper-notes-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.paper-notes-header h3 {
+  margin: 4px 0 0;
+  color: var(--topic-color);
+  font-size: 18px;
+}
+
+.paper-note-list {
+  max-height: calc(min(78vh, 820px) - 74px);
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
+.paper-note-block {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.paper-note-block:last-child {
+  border-bottom: 0;
+}
+
+.paper-note-block header {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.paper-note-block header span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--topic-color) 38%, var(--line));
+  border-radius: 9px;
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.paper-note-block h4 {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.paper-note-block p {
+  margin: 0 0 8px;
+  color: #d0d7db;
+  font-size: 13px;
+}
+
+.paper-note-block ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #c3cbd0;
+  font-size: 13px;
+}
+
+.paper-note-block li + li {
+  margin-top: 6px;
+}
+
+.beginner-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(240px, 0.65fr);
+  gap: 13px;
+  margin-bottom: 10px;
+}
+
+.beginner-card,
+.takeaway-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+
+.beginner-card {
+  border-color: color-mix(in srgb, var(--blue) 35%, var(--line));
+  background:
+    linear-gradient(135deg, rgba(120, 169, 255, 0.11), transparent 65%),
+    var(--panel-2);
+}
+
+.takeaway-card {
+  border-color: color-mix(in srgb, var(--topic-color) 40%, var(--line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--topic-color) 11%, transparent), transparent 70%),
+    var(--panel-2);
+}
+
+.beginner-card > span,
+.takeaway-card > span {
+  color: var(--muted-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.beginner-card h3,
+.takeaway-card h3 {
+  margin: 5px 0 9px;
+  font-size: 16px;
+}
+
+.beginner-card h3 {
+  color: var(--blue);
+}
+
+.takeaway-card h3 {
+  color: var(--topic-color);
+}
+
+.beginner-card p,
+.takeaway-card p {
+  margin: 0;
+  color: #d5dce0;
+  font-size: 14px;
+}
+
+.takeaway-card p {
+  font-weight: 650;
+}
+
+.study-section {
+  scroll-margin-top: 24px;
+  padding: 34px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.study-section.single-chapter {
+  padding-top: 16px;
+}
+
+.study-section:first-child {
+  padding-top: 0;
+}
+
+.study-section-header {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.study-section-header h3 {
+  margin: 2px 0 0;
+  color: var(--topic-color);
+  font-size: clamp(19px, 2vw, 25px);
+}
+
+.study-section-number {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid color-mix(in srgb, var(--topic-color) 45%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--topic-color) 8%, transparent);
+  color: var(--topic-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.study-section-content {
+  padding-left: 64px;
+}
+
+.study-section-content > p {
+  margin-top: 0;
+  color: #d0d7db;
+  font-size: 15px;
+}
+
+.study-section-content > ul {
+  margin: 15px 0 0;
+  padding-left: 20px;
+  color: #c3cbd0;
+}
+
+.study-section-content li + li {
+  margin-top: 8px;
+}
+
+.section-concepts {
+  margin-top: 21px;
+  padding-top: 17px;
+  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.section-concepts .focus-chips {
+  margin-top: 10px;
+}

@@ -1,0 +1,226 @@
+.exam-setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 18px;
+}
+
+.setup-card {
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.setup-card p,
+.exam-rules li {
+  color: var(--muted);
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.official-exam-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel-2));
+}
+
+.official-exam-box span,
+.setup-field small {
+  display: block;
+  color: var(--muted-2);
+  font-size: 11px;
+}
+
+.official-exam-box strong {
+  display: block;
+  color: var(--text);
+}
+
+.official-exam-box p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.setup-field {
+  padding: 15px;
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  background: var(--panel-2);
+}
+
+.setup-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.setup-field small {
+  margin-top: 8px;
+}
+
+.exam-rules {
+  margin: 0;
+  padding-left: 19px;
+}
+
+.exam-rules li + li {
+  margin-top: 9px;
+}
+
+.exam-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 13px 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(18, 21, 24, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.timer {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.exam-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) 190px;
+  justify-content: center;
+  gap: 20px;
+}
+
+.exam-nav {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  align-self: start;
+}
+
+.exam-nav button {
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.exam-nav button.answered {
+  border-color: rgba(184, 243, 74, 0.45);
+  color: var(--accent);
+}
+
+.exam-nav button.active {
+  background: var(--accent);
+  color: #10140b;
+}
+
+.result-card {
+  padding: clamp(26px, 5vw, 52px);
+  text-align: center;
+}
+
+.result-score {
+  margin: 20px 0 8px;
+  color: var(--accent);
+  font-size: clamp(62px, 12vw, 110px);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+
+.result-breakdown {
+  display: grid;
+  gap: 8px;
+  max-width: 780px;
+  margin: 32px auto;
+  text-align: left;
+}
+
+.result-row {
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+}
+
+.result-row.ok {
+  border-left: 3px solid var(--accent);
+}
+
+.result-row.fail {
+  border-left: 3px solid var(--red);
+}
+
+.review-mode-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 25px 0 8px;
+}
+
+.exam-review-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(18, 21, 24, 0.96);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(12px);
+}
+
+.exam-review-toolbar > div {
+  display: grid;
+  justify-items: center;
+  line-height: 1.2;
+}
+
+.exam-review-toolbar > div:not(.review-toolbar-actions) strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.exam-review-toolbar > div:not(.review-toolbar-actions) span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.exam-review-toolbar > :last-child {
+  justify-self: end;
+}
+
+.review-toolbar-actions {
+  display: flex !important;
+  grid-auto-flow: column;
+  gap: 8px;
+  justify-self: end;
+}

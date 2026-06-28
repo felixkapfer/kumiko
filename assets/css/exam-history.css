@@ -1,0 +1,136 @@
+.history-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  padding: 26px 28px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(120deg, rgba(184, 243, 74, 0.08), transparent 55%),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.history-hero > div {
+  max-width: 780px;
+}
+
+.history-hero p:last-child {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.history-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin: 18px 0 34px;
+}
+
+.history-stats article {
+  padding: 17px 19px;
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  background: var(--panel);
+}
+
+.history-stats span,
+.history-stats strong {
+  display: block;
+}
+
+.history-stats span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-stats strong {
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: 24px;
+}
+
+.history-heading {
+  margin-bottom: 14px;
+}
+
+.exam-history-list {
+  display: grid;
+  gap: 11px;
+}
+
+.exam-history-card {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  background: var(--panel);
+}
+
+.history-score {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 82px;
+  border: 1px solid;
+  border-radius: 11px;
+}
+
+.history-score.ok {
+  border-color: rgba(184, 243, 74, 0.4);
+  background: rgba(184, 243, 74, 0.07);
+  color: var(--accent);
+}
+
+.history-score.fail {
+  border-color: rgba(255, 115, 115, 0.4);
+  background: rgba(255, 115, 115, 0.07);
+  color: var(--red);
+}
+
+.history-score strong {
+  font-size: 24px;
+}
+
+.history-score span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.history-details h3 {
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+.history-details .focus-chips {
+  margin-top: 11px;
+}
+
+.history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 15px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-actions {
+  display: grid;
+  gap: 7px;
+  min-width: 145px;
+}
+
+.history-empty {
+  max-width: 720px;
+  margin: 40px auto;
+}
+
+.history-empty p {
+  max-width: 560px;
+  margin: 0 auto 22px;
+}
+

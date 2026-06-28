@@ -1,21 +1,40 @@
 import {
   DIFFICULTY_LABELS,
   buildExam,
-  exactMatch,
+  buildSplitExam,
   formatDue,
   masteryForTopic,
   questionStatus,
   scoreExam,
+  scoreQuestion,
   selectQuestions,
   shuffle,
   updateProgress,
 } from "./engine.mjs";
+import {
+  fetchCatalog,
+  fetchExamContent,
+  fetchState,
+  putState,
+} from "./assets/js/api.js";
+import {
+  findCourse,
+  normalizeContext,
+} from "./assets/js/course-context.js";
+import { changeLanguage } from "./assets/js/language-state.js";
+import {
+  questionSupportsLanguage,
+  supportedQuestionLanguages,
+} from "./assets/js/question-language.js";
+import { cypherViewHtml } from "./assets/js/views/cypher-view.js";
 
 const STORAGE_KEY = "adbs-exam-prep-state-v1";
 const CUSTOM_KEY = "adbs-exam-prep-custom-questions-v1";
 const OVERRIDES_KEY = "adbs-exam-prep-question-overrides-v1";
 const LANGUAGE_KEY = "adbs-exam-prep-language-v1";
 const EXAM_HISTORY_KEY = "adbs-exam-prep-exam-history-v1";
+const LEGACY_COURSE_ID = "adbs";
+const LEGACY_EXAM_ID = "practical-test-3-2026";
 const MAX_EXAM_HISTORY = 25;
 const VIEW_TITLES = {
   dashboard: { de: "Überblick", en: "Dashboard" },
@@ -44,6 +63,9 @@ const UI = {
 };
 
 const state = {
+  catalog: null,
+  courseId: null,
+  examId: null,
   data: null,
   progress: {},
   questionOverrides: {},
@@ -68,6 +90,10 @@ const state = {
       shuffle: true,
       limit: "20",
     },
+  },
+  examSetup: {
+    count: "20",
+    duration: "40",
   },
   exam: null,
   examHistory: [],
@@ -120,6 +146,8 @@ function glossaryDefinition(entry) {
 }
 
 function viewLabel(view) {
+  const navigationLabel = state.data?.navigation?.[view];
+  if (navigationLabel) return localized(navigationLabel);
   return VIEW_TITLES[view]?.[state.language] || VIEW_TITLES[view]?.de || view;
 }
 
@@ -135,6 +163,125 @@ function difficultyLabel(level) {
     },
   };
   return labels[state.language][level] || DIFFICULTY_LABELS[level];
+}
+
+function scoringConfig() {
+  return state.data?.scoring || { type: "exact-match" };
+}
+
+function examConfig() {
+  return state.data?.examConfig || {};
+}
+
+function examDefaults() {
+  return examConfig().defaults || {};
+}
+
+function officialExamConfig() {
+  return examConfig().official || {};
+}
+
+function clampInteger(value, fallback, min, max) {
+  const parsed = Number.parseInt(value, 10);
+  const safe = Number.isFinite(parsed) ? parsed : fallback;
+  return Math.min(Math.max(safe, min), max);
+}
+
+function examSplitGroups(count) {
+  const groups = examConfig().split || [];
+  const official = officialExamConfig();
+  const useOfficialCounts = Number(official.questionCount) === Number(count);
+  return groups.map((group) => ({
+    topicIds: group.topicIds || [],
+    excludeTopicIds: group.excludeTopicIds || [],
+    ratio: Number(group.ratio || 0),
+    count: useOfficialCounts ? group.officialCount : undefined,
+  }));
+}
+
+function buildConfiguredExam(questions, count) {
+  const groups = examSplitGroups(count);
+  if (!groups.length) return buildExam(questions, count);
+  return buildSplitExam(questions, count, groups);
+}
+
+function applyExamDefaults(data) {
+  const defaults = data.examConfig?.defaults;
+  if (!defaults) return;
+  const questionCount = Number(defaults.questionCount);
+  const durationMinutes = Number(defaults.durationMinutes);
+  if (Number.isFinite(questionCount) && questionCount > 0) {
+    state.examSetup.count = String(Math.min(questionCount, data.questions.length));
+  }
+  if (Number.isFinite(durationMinutes) && durationMinutes > 0) {
+    state.examSetup.duration = String(durationMinutes);
+  }
+}
+
+function examSetupValues() {
+  const available = activeQuestions().length;
+  const defaults = examDefaults();
+  const countFallback = Number(defaults.questionCount || state.examSetup.count || 20);
+  const durationFallback = Number(defaults.durationMinutes || state.examSetup.duration || 40);
+  return {
+    available,
+    count: clampInteger(state.examSetup.count, countFallback, 1, Math.max(available, 1)),
+    duration: clampInteger(state.examSetup.duration, durationFallback, 1, 240),
+  };
+}
+
+function examSplitSummary() {
+  const split = examConfig().split || [];
+  if (!split.length) return "";
+  return split
+    .map((group) => {
+      const label = localized(group.label);
+      const percentage = Math.round(Number(group.ratio || 0) * 100);
+      const officialCount = group.officialCount ? ` / ${group.officialCount}` : "";
+      return `${label}: ${percentage}%${officialCount}`;
+    })
+    .join(" · ");
+}
+
+function scoringLabels() {
+  const labels = scoringConfig().labels;
+  return labels?.[state.language] || labels?.de || {};
+}
+
+function signedSelectionScoring() {
+  return scoringConfig().type === "signed-selection";
+}
+
+function scoringNote() {
+  const labels = scoringLabels();
+  if (labels.note) return labels.note;
+  return state.language === "de"
+    ? "Markiere exakt alle richtigen Aussagen. Es können 0 bis alle Optionen richtig sein."
+    : "Select exactly all correct statements. From 0 to all options may be correct.";
+}
+
+function scoringShortLabel() {
+  const labels = scoringLabels();
+  if (labels.short) return labels.short;
+  return state.language === "de"
+    ? "Alles-oder-nichts-Wertung"
+    : "All-or-nothing scoring";
+}
+
+function fullCreditLabel() {
+  if (signedSelectionScoring()) {
+    return state.language === "de" ? "maximal" : "maximum";
+  }
+  return state.language === "de" ? "exakt richtig" : "exactly correct";
+}
+
+function formatPoints(value) {
+  if (!signedSelectionScoring()) return String(value);
+  return value > 0 ? `+${value}` : String(value);
+}
+
+function questionScore(question, selectedIds) {
+  return scoreQuestion(question, selectedIds, scoringConfig());
 }
 
 function dueLabel(timestamp) {
@@ -156,7 +303,10 @@ function updateStaticLanguage() {
   });
   document.querySelectorAll("[data-i18n-label]").forEach((button) => {
     const number = button.querySelector("span")?.outerHTML || "";
-    button.innerHTML = `${number} ${tr(button.dataset.i18nLabel)}`;
+    const label = button.dataset.view
+      ? viewLabel(button.dataset.view)
+      : tr(button.dataset.i18nLabel);
+    button.innerHTML = `${number} ${label}`;
   });
   document.querySelectorAll(".lang-button").forEach((button) => {
     button.classList.toggle("active", button.dataset.language === state.language);
@@ -165,7 +315,9 @@ function updateStaticLanguage() {
 
 function statePayload() {
   return {
-    version: 1,
+    version: 2,
+    courseId: state.courseId,
+    examId: state.examId,
     progress: state.progress,
     questionOverrides: state.questionOverrides,
     customQuestions: state.customQuestions,
@@ -175,17 +327,9 @@ function statePayload() {
 }
 
 function saveState() {
-  const payload = JSON.stringify(statePayload());
+  const payload = statePayload();
   const operation = persistenceQueue.then(async () => {
-    const response = await fetch("/api/state", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || `HTTP ${response.status}`);
-    }
+    await putState(payload);
     persistenceErrorShown = false;
   });
   persistenceQueue = operation.catch((error) => {
@@ -268,18 +412,14 @@ function normalizeCustomQuestions(questions = []) {
       ...question,
       _status: status,
       _sourceFile: question._sourceFile || "Database import",
-      _languages: question._languages || question.languages || [
-        "de",
-        ...(question.prompt?.en ||
-        question.options?.some((option) => option.text?.en)
-          ? ["en"]
-          : []),
-      ],
+      _languages: supportedQuestionLanguages(question),
     };
   });
 }
 
 function applyStoredState(stored) {
+  state.courseId = stored.courseId || state.courseId;
+  state.examId = stored.examId || state.examId;
   state.progress = stored.progress || {};
   state.questionOverrides = stored.questionOverrides || {};
   state.customQuestions = normalizeCustomQuestions(stored.customQuestions);
@@ -309,15 +449,20 @@ function clearLegacyBrowserState() {
   ].forEach((key) => localStorage.removeItem(key));
 }
 
-async function loadState() {
-  const response = await fetch("/api/state", { cache: "no-store" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const stored = await response.json();
+async function loadState(courseId = null, examId = null) {
+  const stored = await fetchState(courseId, examId);
   if (stored.hasData) {
     applyStoredState(stored);
     return;
   }
 
+  applyStoredState(stored);
+  if (
+    stored.courseId !== LEGACY_COURSE_ID ||
+    stored.examId !== LEGACY_EXAM_ID
+  ) {
+    return;
+  }
   const legacy = legacyBrowserState();
   applyStoredState(legacy);
   if (legacy.hasData) {
@@ -331,9 +476,7 @@ function customQuestions() {
 }
 
 async function loadContent() {
-  const response = await fetch("/api/content", { cache: "no-store" });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
+  const data = await fetchExamContent(state.courseId, state.examId);
   const imported = customQuestions();
   const knownIds = new Set(data.questions.map((question) => question.id));
   data.questions.push(
@@ -348,10 +491,73 @@ async function loadContent() {
     label: "In SQLite importierte Fragen",
     count: imported.length,
   });
+  applyExamDefaults(data);
   state.data = data;
   state.learnTopic = data.topics[0]?.id || null;
   document.querySelector("#sidebar-question-count").textContent =
     sidebarCountLabel();
+}
+
+async function loadCatalog() {
+  state.catalog = await fetchCatalog();
+  const context = normalizeContext(
+    state.catalog,
+    state.courseId,
+    state.examId,
+  );
+  state.courseId = context.courseId;
+  state.examId = context.examId;
+}
+
+function resetTransientState() {
+  state.currentView = "dashboard";
+  state.learnSection = 0;
+  state.practice.queue = [];
+  state.practice.index = 0;
+  state.practice.feedback = null;
+  state.practice.selected = [];
+  state.exam = null;
+  state.selectedGlossaryTerm = null;
+}
+
+function renderCourseSelectors() {
+  const courseSelect = document.querySelector("#course-select");
+  const examSelect = document.querySelector("#exam-select");
+  const course = findCourse(state.catalog, state.courseId);
+  if (!course || !courseSelect || !examSelect) return;
+
+  courseSelect.innerHTML = state.catalog.courses
+    .map(
+      (entry) =>
+        `<option value="${escapeHtml(entry.id)}" ${entry.id === state.courseId ? "selected" : ""}>${escapeHtml(entry.code)} · ${escapeHtml(entry.title)}</option>`,
+    )
+    .join("");
+  examSelect.innerHTML = course.exams
+    .map(
+      (exam) =>
+        `<option value="${escapeHtml(exam.id)}" ${exam.id === state.examId ? "selected" : ""}>${escapeHtml(exam.title)}</option>`,
+    )
+    .join("");
+
+  courseSelect.onchange = async (event) => {
+    const selected = findCourse(state.catalog, event.target.value);
+    state.courseId = selected.id;
+    state.examId = selected.defaultExamId || selected.exams[0].id;
+    await switchStudyContext();
+  };
+  examSelect.onchange = async (event) => {
+    state.examId = event.target.value;
+    await switchStudyContext();
+  };
+}
+
+async function switchStudyContext() {
+  resetTransientState();
+  await loadState(state.courseId, state.examId);
+  await loadContent();
+  renderCourseSelectors();
+  render();
+  await saveState();
 }
 
 function questionLifecycle(question) {
@@ -364,14 +570,7 @@ function questionLifecycle(question) {
 }
 
 function supportsLanguage(question, language = state.language) {
-  if (language === "de") return true;
-  if (question._languages?.includes(language)) return true;
-  if (question.languages?.includes(language)) return true;
-  return Boolean(
-    question.prompt?.[language] ||
-      question.context?.[language] ||
-      question.options?.some((option) => option.text?.[language]),
-  );
+  return questionSupportsLanguage(question, language);
 }
 
 function activeQuestions(language = state.language) {
@@ -433,7 +632,7 @@ function render() {
   const renderers = {
     dashboard: renderDashboard,
     learn: renderLearn,
-    coding: renderCypherExamples,
+    coding: renderSpecialContent,
     practice: renderPractice,
     exam: renderExam,
     history: renderExamHistory,
@@ -443,6 +642,7 @@ function render() {
   };
   renderers[state.currentView]();
   updateStaticLanguage();
+  renderCourseSelectors();
   document.querySelector("#sidebar-question-count").textContent = sidebarCountLabel();
 }
 
@@ -512,8 +712,8 @@ function renderDashboard() {
     <div class="hero-grid">
       <section class="hero-card">
         <p class="eyebrow">${state.language === "de" ? "Dein lokaler Lernstand" : "Your local study state"}</p>
-        <h2>${state.language === "de" ? "Alles-oder-nichts trainieren.<br>Bis jede Aussage sitzt." : "Train all-or-nothing scoring.<br>Until every statement is solid."}</h2>
-        <p>${state.language === "de" ? "Die Fragen bilden das Prüfungsformat nach: Eine Aufgabe zählt nur dann als richtig, wenn exakt alle korrekten Optionen und keine falsche Option markiert wurden." : "The questions follow the exam format: a task counts only if you select exactly all correct options and no incorrect option."}</p>
+        <h2>${state.language === "de" ? "Prüfungsnah trainieren.<br>Bis jede Aussage sitzt." : "Train close to the exam.<br>Until every statement is solid."}</h2>
+        <p>${escapeHtml(scoringNote())}</p>
         <div class="hero-actions">
           <button class="primary-button" data-action="quick-practice">${state.language === "de" ? "Fällige Fragen starten" : "Start due questions"}</button>
           <button class="secondary-button" data-view-link="learn">${state.language === "de" ? "Zusammenfassungen öffnen" : "Open summaries"}</button>
@@ -755,113 +955,23 @@ function renderLearn() {
   });
 }
 
+function renderSpecialContent() {
+  if (state.data.paperStudy) {
+    renderPaperStudy();
+    return;
+  }
+  renderCypherExamples();
+}
+
 function renderCypherExamples() {
-  const material = state.data.cypherExamples || {};
-  const examples = material.examples || [];
-  const categories = [...new Set(examples.map((example) => example.category))];
-  const visible = examples.filter(
-    (example) =>
-      (state.cypherLevel === "all" ||
-        example.difficulty === Number(state.cypherLevel)) &&
-      (state.cypherCategory === "all" ||
-        example.category === state.cypherCategory),
-  );
-
-  content.innerHTML = `
-    <section class="coding-hero">
-      <div>
-        <p class="eyebrow">${examples.length} ${state.language === "de" ? "ausführbare Cypher-Beispiele" : "executable Cypher examples"}</p>
-        <h2>${state.language === "de" ? "Cypher lesen, vergleichen und in Neo4j ausführen" : "Read, compare, and run Cypher in Neo4j"}</h2>
-        <p>${state.language === "de" ? "Keine Programmieraufgaben: Die Sammlung zeigt konkrete Graph-Queries von elementaren Patterns bis zu komplexen Pfaden und Subqueries. Jedes Beispiel erklärt, welche Zeilen entstehen und warum." : "No programming exercises: this collection presents concrete graph queries from elementary patterns to complex paths and subqueries. Every example explains which rows are produced and why."}</p>
-      </div>
-      <div class="database-status">
-        <span class="sync-dot"></span>
-        <div>
-          <strong>Neo4j / Cypher</strong>
-          <span>${state.language === "de" ? "APOC-frei · für Neo4j 5+" : "APOC-free · for Neo4j 5+"}</span>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel cypher-core-difference">
-      <p class="eyebrow">${state.language === "de" ? "Zentrale Unterscheidung" : "Core distinction"}</p>
-      <h3>MATCH vs. WHERE</h3>
-      <div class="comparison-grid">
-        <div>
-          <strong>MATCH</strong>
-          <p>${escapeHtml(localized(material.matchVsWhere?.match))}</p>
-          <pre><code>${escapeHtml(material.matchVsWhere?.matchExample || "")}</code></pre>
-        </div>
-        <div>
-          <strong>WHERE</strong>
-          <p>${escapeHtml(localized(material.matchVsWhere?.where))}</p>
-          <pre><code>${escapeHtml(material.matchVsWhere?.whereExample || "")}</code></pre>
-        </div>
-      </div>
-      <div class="example-box">${escapeHtml(localized(material.matchVsWhere?.takeaway))}</div>
-    </section>
-
-    <details class="solution-details cypher-setup">
-      <summary>${state.language === "de" ? "Gemeinsamen Beispielgraphen für Neo4j anzeigen" : "Show shared Neo4j example graph"}</summary>
-      <div class="solution-content">
-        <p>${escapeHtml(localized(material.setup?.description))}</p>
-        <div class="code-block">
-          <div class="code-label">Cypher setup</div>
-          <pre><code>${escapeHtml(material.setup?.query || "")}</code></pre>
-        </div>
-      </div>
-    </details>
-
-    <div class="coding-filters" role="group" aria-label="${state.language === "de" ? "Themenfilter" : "Topic filter"}">
-      <span class="filter-label">${state.language === "de" ? "Schwierigkeit:" : "Difficulty:"}</span>
-      <button class="chip ${state.cypherLevel === "all" ? "active" : ""}" data-cypher-level="all">${state.language === "de" ? "Alle" : "All"}</button>
-      ${[1, 2, 3, 4, 5].map((level) => `<button class="chip ${state.cypherLevel === String(level) ? "active" : ""}" data-cypher-level="${level}">${level} · ${escapeHtml(difficultyLabel(level))}</button>`).join("")}
-    </div>
-    <div class="coding-filters" role="group" aria-label="${state.language === "de" ? "Kategorienfilter" : "Category filter"}">
-      <span class="filter-label">${state.language === "de" ? "Kategorie:" : "Category:"}</span>
-      <button class="chip ${state.cypherCategory === "all" ? "active" : ""}" data-cypher-category="all">${state.language === "de" ? "Alle" : "All"} · ${examples.length}</button>
-      ${categories.map((category) => {
-        const count = examples.filter((example) => example.category === category).length;
-        return `<button class="chip ${state.cypherCategory === category ? "active" : ""}" data-cypher-category="${escapeHtml(category)}">${escapeHtml(category)} · ${count}</button>`;
-      }).join("")}
-    </div>
-
-    <div class="coding-list">
-      ${visible.map((example, index) => {
-        return `
-          <article class="coding-card" style="--topic-color:#ff8a5b">
-            <header class="coding-card-header">
-              <div class="question-meta">
-                <span class="badge">${escapeHtml(example.category)}</span>
-                <span class="badge difficulty-${example.difficulty}">${example.difficulty} · ${escapeHtml(difficultyLabel(example.difficulty))}</span>
-              </div>
-              <span class="eyebrow">${escapeHtml(example.id)} · ${String(index + 1).padStart(2, "0")}</span>
-            </header>
-            <div class="coding-card-body">
-              <h3>${escapeHtml(localized(example.title))}</h3>
-              <p>${escapeHtml(localized(example.question))}</p>
-              <div class="code-block solution-code">
-                <div class="code-label">Cypher</div>
-                <pre><code>${escapeHtml(example.query)}</code></pre>
-              </div>
-              ${example.alternative ? `
-                <div class="code-block">
-                  <div class="code-label">${state.language === "de" ? "Alternative / Vergleich" : "Alternative / comparison"}</div>
-                  <pre><code>${escapeHtml(example.alternative)}</code></pre>
-                </div>
-              ` : ""}
-              <div class="cypher-explanation">
-                <strong>${state.language === "de" ? "So liest du die Query" : "How to read the query"}</strong>
-                <p>${escapeHtml(localized(example.explanation))}</p>
-              </div>
-              <div class="example-box"><strong>${state.language === "de" ? "Ergebnisidee:" : "Result idea:"}</strong> ${escapeHtml(localized(example.expectedResult))}</div>
-              ${example.pitfall ? `<div class="pitfall-box"><strong>${state.language === "de" ? "Klausurfalle:" : "Exam trap:"}</strong> ${escapeHtml(localized(example.pitfall))}</div>` : ""}
-            </div>
-          </article>
-        `;
-      }).join("") || `<div class="empty-state">${state.language === "de" ? "Für diesen Filter gibt es keine Cypher-Beispiele." : "No Cypher examples match this filter."}</div>`}
-    </div>
-  `;
+  content.innerHTML = cypherViewHtml({
+    material: state.data.cypherExamples || {},
+    language: state.language,
+    selectedLevel: state.cypherLevel,
+    selectedCategory: state.cypherCategory,
+    difficultyLabel,
+    escapeHtml,
+  });
 
   content.querySelectorAll("[data-cypher-level]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -874,6 +984,76 @@ function renderCypherExamples() {
       state.cypherCategory = button.dataset.cypherCategory;
       renderCypherExamples();
     });
+  });
+}
+
+function renderPaperStudy() {
+  const paper = state.data.paperStudy;
+  const title = localized(paper.title);
+  const abstract = localized(paper.abstract);
+  const sections = paper.sections || [];
+  const paragraphNotes = paper.paragraphs?.length ? paper.paragraphs : sections;
+  const paperPath = paper.source?.path || "#";
+  content.innerHTML = `
+    <article class="summary-card paper-study-card" style="--topic-color:#45c06f">
+      <header class="summary-hero">
+        <span class="topic-kicker">${escapeHtml(paper.source?.venue || "Paper")} · ${escapeHtml(paper.source?.arxiv || "")}</span>
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(abstract)}</p>
+        <div class="study-stats">
+          <span><strong>${paragraphNotes.length}</strong> ${state.language === "de" ? "Absatznotizen" : "paragraph notes"}</span>
+          <span><strong>${topicQuestions("paper-llm-judges").length}</strong> ${state.language === "de" ? "Paper-Fragen" : "paper questions"}</span>
+          <span><strong>${escapeHtml(paper.source?.file || "")}</strong></span>
+        </div>
+        <div class="hero-actions">
+          <a class="primary-button" href="${escapeHtml(paperPath)}" target="_blank" rel="noreferrer">${state.language === "de" ? "Paper öffnen" : "Open paper"}</a>
+          <button class="secondary-button" id="practice-paper">${state.language === "de" ? "Paper-Fragen starten" : "Start paper questions"}</button>
+        </div>
+      </header>
+      <div class="summary-body">
+        <section class="paper-meta-row">
+          <div>
+            <span>${state.language === "de" ? "Autor:innen" : "Authors"}</span>
+            <strong>${escapeHtml(paper.authors || "")}</strong>
+          </div>
+          <div>
+            <span>${state.language === "de" ? "Quelle" : "Source"}</span>
+            <strong>${escapeHtml(paper.source?.arxiv || paper.source?.file || "")}</strong>
+          </div>
+        </section>
+        <div class="paper-reader-layout">
+          <section class="paper-pdf-panel" aria-label="${state.language === "de" ? "Paper PDF" : "Paper PDF"}">
+            <iframe class="paper-reader-frame" src="${escapeHtml(paperPath)}" title="${escapeHtml(title)}"></iframe>
+            <a class="secondary-button" href="${escapeHtml(paperPath)}" target="_blank" rel="noreferrer">${state.language === "de" ? "PDF in eigenem Tab öffnen" : "Open PDF in new tab"}</a>
+          </section>
+          <aside class="paper-notes-panel">
+            <header class="paper-notes-header">
+              <p class="eyebrow">${state.language === "de" ? "Absatz für Absatz" : "Paragraph by paragraph"}</p>
+              <h3>${state.language === "de" ? "Lernnotizen neben dem Paper" : "Study notes next to the paper"}</h3>
+            </header>
+            <div class="paper-note-list">
+              ${paragraphNotes
+                .map(
+                  (section, index) => `
+                    <section class="paper-note-block">
+                      <header>
+                        <span>${String(index + 1).padStart(2, "0")}</span>
+                        <h4>${escapeHtml(localized(section.title))}</h4>
+                      </header>
+                      ${section.body ? `<p>${escapeHtml(localized(section.body))}</p>` : ""}
+                      ${section.bullets?.length ? `<ul>${section.bullets.map((item) => `<li>${escapeHtml(localized(item))}</li>`).join("")}</ul>` : ""}
+                    </section>
+                  `,
+                )
+                .join("")}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </article>
+  `;
+  content.querySelector("#practice-paper")?.addEventListener("click", () => {
+    startQuestionSet(topicQuestions("paper-llm-judges").map((question) => question.id));
   });
 }
 
@@ -1043,9 +1223,9 @@ function renderPractice() {
     questionArea = `
       <div class="result-card">
         <p class="eyebrow">${state.language === "de" ? "Session abgeschlossen" : "Session complete"}</p>
-        <h2>${session.sessionCorrect} / ${session.sessionAnswered} ${state.language === "de" ? "exakt richtig" : "exactly correct"}</h2>
+        <h2>${session.sessionCorrect} / ${session.sessionAnswered} ${escapeHtml(fullCreditLabel())}</h2>
         <div class="result-score">${rate}%</div>
-        <p>${state.language === "de" ? "Nur vollständig richtige Auswahlmengen zählen als Treffer." : "Only fully exact selections count as correct."}</p>
+        <p>${escapeHtml(scoringNote())}</p>
         <div class="hero-actions" style="justify-content:center">
           <button class="primary-button" id="repeat-session">${state.language === "de" ? "Neue Session" : "New session"}</button>
           <button class="secondary-button" data-view-link="dashboard">${state.language === "de" ? "Zum Überblick" : "Back to dashboard"}</button>
@@ -1101,7 +1281,7 @@ function renderQuestionCard(question, mode) {
     ? `
       <div class="session-header">
         <span>${state.language === "de" ? "Frage" : "Question"} ${Math.min(session.index + 1, session.queue.length)} ${state.language === "de" ? "von" : "of"} ${session.queue.length}</span>
-        <span>${session.sessionCorrect} ${state.language === "de" ? "exakt richtig" : "exactly correct"} · ${session.sessionAnswered} ${state.language === "de" ? "beantwortet" : "answered"}</span>
+        <span>${session.sessionCorrect} ${escapeHtml(fullCreditLabel())} · ${session.sessionAnswered} ${state.language === "de" ? "beantwortet" : "answered"}</span>
       </div>
     `
     : "";
@@ -1109,8 +1289,14 @@ function renderQuestionCard(question, mode) {
   const feedbackHtml = feedback
     ? `
       <div class="feedback-banner ${feedback.correct ? "correct" : "wrong"}">
-        <strong>${feedback.correct ? (state.language === "de" ? "Exakt richtig — voller Punkt." : "Exactly correct — full point.") : (state.language === "de" ? "Nicht exakt — 0 Punkte." : "Not exact — 0 points.")}</strong>
-        <p>${escapeHtml(localized(question.explanation))} ${progress?.dueAt ? `${state.language === "de" ? "Nächste reguläre Wiederholung" : "Next regular review"}: ${dueLabel(progress.dueAt)}.` : ""}</p>
+        <strong>${
+          signedSelectionScoring()
+            ? `${state.language === "de" ? "Punkte" : "Points"}: ${formatPoints(feedback.points)} / ${feedback.maximum}`
+            : feedback.correct
+              ? (state.language === "de" ? "Exakt richtig — voller Punkt." : "Exactly correct — full point.")
+              : (state.language === "de" ? "Nicht exakt — 0 Punkte." : "Not exact — 0 points.")
+        }</strong>
+        <p>${feedback.correct ? escapeHtml(scoringLabels().correct || "") : escapeHtml(scoringLabels().wrong || "")} ${escapeHtml(localized(question.explanation))} ${progress?.dueAt ? `${state.language === "de" ? "Nächste reguläre Wiederholung" : "Next regular review"}: ${dueLabel(progress.dueAt)}.` : ""}</p>
       </div>
     `
     : "";
@@ -1129,7 +1315,7 @@ function renderQuestionCard(question, mode) {
       <div class="question-content">
         <h2>${escapeHtml(localized(question.prompt))}</h2>
         ${question.context ? `<div class="question-context">${escapeHtml(localized(question.context))}</div>` : ""}
-        <p class="answer-note">${state.language === "de" ? "Markiere exakt alle richtigen Aussagen. Es können 0 bis alle Optionen richtig sein." : "Select exactly all correct statements. From 0 to all options may be correct."}</p>
+        <p class="answer-note">${escapeHtml(scoringNote())}</p>
         <div class="options-list">${optionHtml}</div>
         ${feedbackHtml}
       </div>
@@ -1171,17 +1357,21 @@ function bindQuestionCard(question, mode) {
 
   if (mode === "practice") {
     content.querySelector('[data-action="submit-question"]')?.addEventListener("click", () => {
-      const correct = exactMatch(state.practice.selected, question.options);
+      const result = questionScore(question, state.practice.selected);
       state.progress[question.id] = updateProgress(
         state.progress[question.id],
-        correct,
+        result.correct,
       );
       state.progress[question.id].lastSelection = [...state.practice.selected];
-      state.practice.feedback = { correct };
+      state.progress[question.id].lastScore = {
+        points: result.points,
+        maximum: result.maximum,
+      };
+      state.practice.feedback = result;
       state.practice.sessionAnswered += 1;
-      if (correct) state.practice.sessionCorrect += 1;
+      if (result.correct) state.practice.sessionCorrect += 1;
       if (
-        !correct &&
+        !result.correct &&
         !state.practice.queue
           .slice(state.practice.index + 1)
           .includes(question.id)
@@ -1231,46 +1421,66 @@ function bindQuestionCard(question, mode) {
 
 function renderExam() {
   if (!state.exam) {
+    const setup = examSetupValues();
+    state.examSetup.count = String(setup.count);
+    state.examSetup.duration = String(setup.duration);
+    const official = officialExamConfig();
+    const splitSummary = examSplitSummary();
+    const hasOfficial = Number(official.questionCount) > 0 && Number(official.durationMinutes) > 0;
     content.innerHTML = `
       <div class="exam-setup">
         <section class="setup-card">
           <p class="eyebrow">${state.language === "de" ? "Realistischer Prüfungsmodus" : "Realistic exam mode"}</p>
-          <h2>${state.language === "de" ? "Eine falsche oder fehlende Markierung bedeutet 0 Punkte." : "One wrong or missing mark means 0 points."}</h2>
-          <p>${state.language === "de" ? "Während der Simulation werden keine Lösungen angezeigt. Die Auswertung erfolgt gesammelt am Ende." : "No solutions are shown during the simulation. Evaluation happens at the end."}</p>
+          <h2>${escapeHtml(scoringLabels().setupTitle || (state.language === "de" ? "Eine falsche oder fehlende Markierung bedeutet 0 Punkte." : "One wrong or missing mark means 0 points."))}</h2>
+          <p>${escapeHtml(scoringLabels().setupLead || (state.language === "de" ? "Während der Simulation werden keine Lösungen angezeigt. Die Auswertung erfolgt gesammelt am Ende." : "No solutions are shown during the simulation. Evaluation happens at the end."))}</p>
+          ${
+            hasOfficial
+              ? `<div class="official-exam-box">
+                  <div>
+                    <span>${state.language === "de" ? "Offizielle Struktur" : "Official structure"}</span>
+                    <strong>${official.questionCount} ${state.language === "de" ? "Fragen" : "questions"} · ${official.durationMinutes} ${state.language === "de" ? "Minuten" : "minutes"}</strong>
+                    ${splitSummary ? `<p>${escapeHtml(splitSummary)}</p>` : ""}
+                  </div>
+                  <button class="secondary-button" id="use-official-exam">${state.language === "de" ? "Übernehmen" : "Use"}</button>
+                </div>`
+              : ""
+          }
           <div class="setup-grid">
             <div class="setup-field">
               <label for="exam-count">${state.language === "de" ? "Anzahl der Aufgaben" : "Number of tasks"}</label>
-              <select id="exam-count">
-                <option value="10">10 ${state.language === "de" ? "Aufgaben" : "tasks"}</option>
-                <option value="20" selected>20 ${state.language === "de" ? "Aufgaben" : "tasks"}</option>
-                <option value="30">30 ${state.language === "de" ? "Aufgaben" : "tasks"}</option>
-                <option value="40">40 ${state.language === "de" ? "Aufgaben" : "tasks"}</option>
-              </select>
+              <input id="exam-count" type="number" min="1" max="${setup.available}" step="1" value="${setup.count}">
+              <small>${setup.available} ${state.language === "de" ? "aktive Fragen verfügbar" : "active questions available"}</small>
             </div>
             <div class="setup-field">
               <label for="exam-duration">${state.language === "de" ? "Zeitlimit" : "Time limit"}</label>
-              <select id="exam-duration">
-                <option value="20">20 ${state.language === "de" ? "Minuten" : "minutes"}</option>
-                <option value="40" selected>40 ${state.language === "de" ? "Minuten" : "minutes"}</option>
-                <option value="60">60 ${state.language === "de" ? "Minuten" : "minutes"}</option>
-                <option value="90">90 ${state.language === "de" ? "Minuten" : "minutes"}</option>
-              </select>
+              <input id="exam-duration" type="number" min="1" max="240" step="1" value="${setup.duration}">
+              <small>${state.language === "de" ? "Minuten frei wählbar" : "minutes, freely selectable"}</small>
             </div>
           </div>
-          <button class="primary-button" id="start-exam">${state.language === "de" ? "Prüfung starten" : "Start exam"}</button>
+          <button class="primary-button" id="start-exam" ${setup.available ? "" : "disabled"}>${state.language === "de" ? "Prüfung starten" : "Start exam"}</button>
         </section>
         <aside class="setup-card">
           <h3>${state.language === "de" ? "Regeln" : "Rules"}</h3>
           <ul class="exam-rules">
-            <li>${state.language === "de" ? "Pro Aufgabe sind 0 bis alle Aussagen richtig." : "Per task, 0 to all statements may be correct."}</li>
-            <li>${state.language === "de" ? "Nur die exakt richtige Auswahlmenge gibt einen Punkt." : "Only the exact selection gets a point."}</li>
+            <li>${escapeHtml(scoringNote())}</li>
             <li>${state.language === "de" ? "Fragen und Antwortoptionen werden gemischt." : "Questions and options are shuffled."}</li>
-            <li>${state.language === "de" ? "Alle fünf aktuellen Themen werden möglichst gleichmäßig abgedeckt." : "All five current topics are covered as evenly as possible."}</li>
+            <li>${splitSummary ? escapeHtml(state.language === "de" ? `AIR-Split: ${splitSummary}.` : `AIR split: ${splitSummary}.`) : (state.language === "de" ? "Alle aktuellen Themen werden möglichst gleichmäßig abgedeckt." : "All current topics are covered as evenly as possible.")}</li>
             <li>${state.language === "de" ? "Nach Abgabe erhältst du eine vollständige Auswertung." : "After submission you get a full review."}</li>
           </ul>
         </aside>
       </div>
     `;
+    content.querySelector("#exam-count").addEventListener("input", (event) => {
+      state.examSetup.count = event.target.value;
+    });
+    content.querySelector("#exam-duration").addEventListener("input", (event) => {
+      state.examSetup.duration = event.target.value;
+    });
+    content.querySelector("#use-official-exam")?.addEventListener("click", () => {
+      state.examSetup.count = String(Math.min(Number(official.questionCount), setup.available));
+      state.examSetup.duration = String(official.durationMinutes);
+      renderExam();
+    });
     content.querySelector("#start-exam").addEventListener("click", startExam);
     return;
   }
@@ -1284,7 +1494,7 @@ function renderExam() {
   const remaining = Math.max(0, state.exam.endsAt - Date.now());
   content.innerHTML = `
     <div class="exam-header">
-      <div><strong>${state.language === "de" ? "Aufgabe" : "Task"} ${state.exam.index + 1} / ${state.exam.questions.length}</strong><br><span class="eyebrow">${state.language === "de" ? "Alles-oder-nichts-Wertung" : "All-or-nothing scoring"}</span></div>
+      <div><strong>${state.language === "de" ? "Aufgabe" : "Task"} ${state.exam.index + 1} / ${state.exam.questions.length}</strong><br><span class="eyebrow">${escapeHtml(scoringShortLabel())}</span></div>
       <div class="timer" id="exam-timer">${formatTimer(remaining)}</div>
       <button class="danger-button" id="finish-exam">${state.language === "de" ? "Prüfung abgeben" : "Submit exam"}</button>
     </div>
@@ -1316,17 +1526,24 @@ function renderExam() {
 }
 
 function startExam() {
-  const count = Number(content.querySelector("#exam-count").value);
-  const duration = Number(content.querySelector("#exam-duration").value);
-  const questions = buildExam(activeQuestions(), count);
+  const availableQuestions = activeQuestions();
+  if (!availableQuestions.length) {
+    showToast(state.language === "de" ? "Keine aktiven Fragen verfügbar." : "No active questions available.");
+    return;
+  }
+  const setup = examSetupValues();
+  state.examSetup.count = String(setup.count);
+  state.examSetup.duration = String(setup.duration);
+  const questions = buildConfiguredExam(availableQuestions, setup.count);
   state.exam = {
     questions,
     index: 0,
     answers: {},
     visited: new Set(),
     optionOrder: {},
+    scoring: scoringConfig(),
     startedAt: Date.now(),
-    endsAt: Date.now() + duration * 60 * 1000,
+    endsAt: Date.now() + setup.duration * 60 * 1000,
     finished: false,
     result: null,
     reviewMode: "summary",
@@ -1412,6 +1629,7 @@ function archiveCompletedExam(finishedAt) {
       ]),
     ),
     optionOrder: { ...state.exam.optionOrder },
+    scoring: state.exam.scoring || scoringConfig(),
     result: state.exam.result,
   };
   state.examHistory = [
@@ -1424,7 +1642,11 @@ function archiveCompletedExam(finishedAt) {
 
 function finishExam() {
   clearInterval(examTimer);
-  const result = scoreExam(state.exam.questions, state.exam.answers);
+  const result = scoreExam(
+    state.exam.questions,
+    state.exam.answers,
+    state.exam.scoring || scoringConfig(),
+  );
   state.exam.questions.forEach((question) => {
     const detail = result.details.find((entry) => entry.id === question.id);
     state.progress[question.id] = updateProgress(
@@ -1434,6 +1656,10 @@ function finishExam() {
     state.progress[question.id].lastSelection = [
       ...(state.exam.answers[question.id] || []),
     ];
+    state.progress[question.id].lastScore = {
+      points: detail.points,
+      maximum: detail.maximum,
+    };
   });
   state.exam.finished = true;
   state.exam.result = result;
@@ -1459,7 +1685,7 @@ function renderExamResult() {
       return `
         <div class="result-row ${detail.correct ? "ok" : "fail"}">
           <span>${detail.correct ? "✓" : "✗"}</span>
-          <span>${escapeHtml(localized(question.prompt))}</span>
+          <span>${escapeHtml(localized(question.prompt))}${signedSelectionScoring() ? ` · ${state.language === "de" ? "Punkte" : "points"}: ${formatPoints(detail.points)} / ${detail.maximum}` : ""}</span>
           <button class="ghost-button" data-review-index="${index}">${state.language === "de" ? "Ansehen" : "Review"}</button>
         </div>
       `;
@@ -1470,7 +1696,7 @@ function renderExamResult() {
       <p class="eyebrow">${state.language === "de" ? "Prüfung ausgewertet" : "Exam evaluated"}</p>
       <h2>${result.points} ${state.language === "de" ? "von" : "of"} ${result.maximum} ${state.language === "de" ? "Punkten" : "points"}</h2>
       <div class="result-score">${result.percentage}%</div>
-      <p>${state.language === "de" ? (result.percentage >= 80 ? "Starker Stand. Jetzt gezielt die verbliebenen Fehlermuster beseitigen." : result.percentage >= 60 ? "Solide Basis, aber die Alles-oder-nichts-Fallen kosten noch Punkte." : "Die Grundlagen und Abgrenzungen sollten vor der nächsten Simulation systematisch wiederholt werden.") : (result.percentage >= 80 ? "Strong status. Now target the remaining error patterns." : result.percentage >= 60 ? "Solid base, but all-or-nothing traps still cost points." : "Repeat fundamentals and distinctions before the next simulation.")}</p>
+      <p>${state.language === "de" ? (result.percentage >= 80 ? "Starker Stand. Jetzt gezielt die verbliebenen Fehlermuster beseitigen." : result.percentage >= 60 ? "Solide Basis, aber die Prüfungsfallen kosten noch Punkte." : "Die Grundlagen und Abgrenzungen sollten vor der nächsten Simulation systematisch wiederholt werden.") : (result.percentage >= 80 ? "Strong status. Now target the remaining error patterns." : result.percentage >= 60 ? "Solid base, but exam traps still cost points." : "Repeat fundamentals and distinctions before the next simulation.")}</p>
       <div class="review-mode-actions">
         <button class="primary-button" id="review-one-by-one">${state.language === "de" ? "Ergebnisse einzeln durchgehen" : "Review one by one"}</button>
         <button class="secondary-button" id="review-all">${state.language === "de" ? "Alle Lösungen untereinander" : "Show all solutions"}</button>
@@ -1527,7 +1753,12 @@ function renderExamResult() {
 
 function renderExamReviewQuestion(question, index, showNavigation = false) {
   const selected = new Set(state.exam.answers[question.id] || []);
-  const exact = exactMatch([...selected], question.options);
+  const detail = scoreQuestion(
+    question,
+    [...selected],
+    state.exam.scoring || scoringConfig(),
+  );
+  const exact = detail.correct;
   const topic = topicContent(topicById(question.topic));
   const options = orderedOptions(question, "exam")
     .map((option, optionIndex) => {
@@ -1580,7 +1811,7 @@ function renderExamReviewQuestion(question, index, showNavigation = false) {
           <span class="badge" style="border-color:${escapeHtml(topic?.color || "#555")}">${escapeHtml(topic?.shortTitle || topic?.title || question.topic)}</span>
           <span class="badge difficulty-${question.difficulty}">${question.difficulty} · ${escapeHtml(difficultyLabel(question.difficulty))}</span>
         </div>
-        <span class="review-status ${exact ? "ok" : "fail"}">${exact ? "✓ " : "✗ "}${state.language === "de" ? (exact ? "Exakt richtig" : "Nicht exakt") : (exact ? "Exactly correct" : "Not exact")}</span>
+        <span class="review-status ${exact ? "ok" : "fail"}">${exact ? "✓ " : "✗ "}${signedSelectionScoring() ? `${state.language === "de" ? "Punkte" : "Points"} ${formatPoints(detail.points)} / ${detail.maximum}` : (state.language === "de" ? (exact ? "Exakt richtig" : "Nicht exakt") : (exact ? "Exactly correct" : "Not exact"))}</span>
       </div>
       <div class="question-content">
         <h2>${escapeHtml(localized(question.prompt))}</h2>
@@ -1592,7 +1823,13 @@ function renderExamReviewQuestion(question, index, showNavigation = false) {
         </div>
         <div class="options-list">${options}</div>
         <div class="feedback-banner ${exact ? "correct" : "wrong"}">
-          <strong>${exact ? (state.language === "de" ? "Exakt richtig — 1 Punkt." : "Exactly correct — 1 point.") : (state.language === "de" ? "Nicht exakt — 0 Punkte." : "Not exact — 0 points.")}</strong>
+          <strong>${
+            signedSelectionScoring()
+              ? `${state.language === "de" ? "Punkte" : "Points"}: ${formatPoints(detail.points)} / ${detail.maximum}`
+              : exact
+                ? (state.language === "de" ? "Exakt richtig — 1 Punkt." : "Exactly correct — 1 point.")
+                : (state.language === "de" ? "Nicht exakt — 0 Punkte." : "Not exact — 0 points.")
+          }</strong>
           <p>${escapeHtml(localized(question.explanation))}</p>
         </div>
       </div>
@@ -1608,13 +1845,13 @@ function renderExamReviewQuestion(question, index, showNavigation = false) {
 
 function renderExamReview(mode) {
   const { result, questions } = state.exam;
-  const wrongCount = result.maximum - result.points;
+  const wrongCount = result.details.filter((detail) => !detail.correct).length;
   const toolbar = `
     <div class="exam-review-toolbar">
       <button class="ghost-button" id="review-summary">${state.language === "de" ? "← Zurück zur Übersicht" : "← Back to summary"}</button>
       <div>
         <strong>${result.points} / ${result.maximum}</strong>
-        <span>${state.language === "de" ? `${wrongCount} nicht exakt` : `${wrongCount} not exact`}</span>
+        <span>${state.language === "de" ? `${wrongCount} nicht maximal` : `${wrongCount} not maximum`}</span>
       </div>
       <div class="review-toolbar-actions">
         <button class="ghost-button" id="review-history">${state.language === "de" ? "Verlauf" : "History"}</button>
@@ -1716,7 +1953,11 @@ function formatExamDuration(milliseconds) {
 }
 
 function resultForHistoryEntry(entry) {
-  return scoreExam(entry.questions, entry.answers || {});
+  return scoreExam(
+    entry.questions,
+    entry.answers || {},
+    entry.scoring || scoringConfig(),
+  );
 }
 
 function openExamHistoryEntry(entryId, mode = "summary") {
@@ -1737,6 +1978,7 @@ function openExamHistoryEntry(entryId, mode = "summary") {
     answers: JSON.parse(JSON.stringify(entry.answers || {})),
     visited: new Set(questions.map((question) => question.id)),
     optionOrder: { ...(entry.optionOrder || {}) },
+    scoring: entry.scoring || scoringConfig(),
     startedAt: entry.startedAt,
     endsAt: entry.finishedAt,
     finished: true,
@@ -1773,8 +2015,8 @@ function renderExamHistory() {
       results.length,
   );
   const best = Math.max(...results.map((result) => result.percentage));
-  const totalQuestions = results.reduce(
-    (sum, result) => sum + result.maximum,
+  const totalQuestions = entries.reduce(
+    (sum, entry) => sum + (entry.questions?.length || 0),
     0,
   );
 
@@ -1807,6 +2049,7 @@ function renderExamHistory() {
       ${entries.map((entry) => {
         const result = resultForHistoryEntry(entry);
         const topicIds = [...new Set(entry.questions.map((question) => question.topic))];
+        const notMaximum = result.details.filter((detail) => !detail.correct).length;
         return `
           <article class="exam-history-card">
             <div class="history-score ${result.percentage >= 60 ? "ok" : "fail"}">
@@ -1815,11 +2058,11 @@ function renderExamHistory() {
             </div>
             <div class="history-details">
               <p class="eyebrow">${escapeHtml(formatExamHistoryDate(entry.finishedAt))}</p>
-              <h3>${state.language === "de" ? "Prüfungssimulation" : "Exam simulation"} · ${result.maximum} ${state.language === "de" ? "Fragen" : "questions"}</h3>
+              <h3>${state.language === "de" ? "Prüfungssimulation" : "Exam simulation"} · ${entry.questions.length} ${state.language === "de" ? "Fragen" : "questions"}</h3>
               <div class="history-meta">
                 <span>${state.language === "de" ? "Dauer" : "Duration"}: ${escapeHtml(formatExamDuration(entry.durationMs || entry.finishedAt - entry.startedAt))}</span>
-                <span>${state.language === "de" ? "Richtig" : "Correct"}: ${result.points}</span>
-                <span>${state.language === "de" ? "Nicht exakt" : "Not exact"}: ${result.maximum - result.points}</span>
+                <span>${state.language === "de" ? "Punkte" : "Points"}: ${result.points} / ${result.maximum}</span>
+                <span>${state.language === "de" ? "Nicht maximal" : "Not maximum"}: ${notMaximum}</span>
               </div>
               <div class="focus-chips">
                 ${topicIds.map((topicId) => {
@@ -2200,12 +2443,12 @@ function validateImportedPayload(payload) {
     question._importedAt = Date.now();
     question.status = question.status || "active";
     question._status = question.status;
-    question._languages = question.languages || [
-      "de",
-      ...(question.prompt?.en || question.options.some((option) => option.text?.en)
-        ? ["en"]
-        : []),
-    ];
+    question._languages = supportedQuestionLanguages(question);
+    if (question._languages.length !== 2) {
+      throw new Error(
+        `${question.id}: prompt, context, explanations and all option texts must be available in German and English.`,
+      );
+    }
     known.add(question.id);
   }
   return payload.questions;
@@ -2411,13 +2654,7 @@ document.querySelector("#mobile-menu").addEventListener("click", () => {
 });
 document.querySelectorAll("[data-language]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.language === state.language) return;
-    state.language = button.dataset.language;
-    state.practice.queue = [];
-    state.practice.index = 0;
-    state.practice.feedback = null;
-    state.practice.selected = [];
-    state.exam = null;
+    if (!changeLanguage(state, button.dataset.language)) return;
     saveState();
     render();
   });
@@ -2438,7 +2675,13 @@ document.querySelector("#reset-progress").addEventListener("click", () => {
 });
 
 try {
+  await loadCatalog();
   await loadState();
+  ({ courseId: state.courseId, examId: state.examId } = normalizeContext(
+    state.catalog,
+    state.courseId,
+    state.examId,
+  ));
   updateStaticLanguage();
   await loadContent();
   render();

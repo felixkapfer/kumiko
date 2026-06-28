@@ -1,0 +1,175 @@
+.exam-review-question {
+  border-top: 3px solid transparent;
+}
+
+.exam-review-question.review-correct {
+  border-top-color: var(--accent);
+}
+
+.exam-review-question.review-wrong {
+  border-top-color: var(--red);
+}
+
+.review-status {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.review-status.ok {
+  color: var(--accent);
+}
+
+.review-status.fail {
+  color: var(--red);
+}
+
+.review-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 17px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.review-legend span {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.review-legend .correct-marker {
+  border-color: rgba(184, 243, 74, 0.4);
+  color: var(--accent);
+}
+
+.review-legend .wrong-marker {
+  border-color: rgba(255, 115, 115, 0.4);
+  color: var(--red);
+}
+
+.review-option {
+  cursor: default;
+}
+
+.review-option:hover {
+  border-color: var(--line);
+}
+
+.review-option.correct-option:hover {
+  border-color: rgba(184, 243, 74, 0.55);
+}
+
+.review-option.wrong-selected:has(input:checked) {
+  border-color: rgba(255, 115, 115, 0.7);
+  background: rgba(255, 115, 115, 0.1);
+}
+
+.review-option.missed-correct {
+  border-style: dashed;
+}
+
+.review-option.correctly-unselected {
+  opacity: 0.82;
+}
+
+.review-option input:disabled {
+  opacity: 1;
+}
+
+.review-option .option-explanation strong {
+  color: #dde3e6;
+}
+
+.review-question-actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.review-exam-nav button.review-ok {
+  border-color: rgba(184, 243, 74, 0.55);
+  color: var(--accent);
+}
+
+.review-exam-nav button.review-fail {
+  border-color: rgba(255, 115, 115, 0.55);
+  color: var(--red);
+}
+
+.review-exam-nav button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #10140b;
+}
+
+.review-all-heading {
+  max-width: 760px;
+  margin: 0 auto 20px;
+  text-align: center;
+}
+
+.review-all-heading h2 {
+  margin-bottom: 8px;
+}
+
+.review-all-heading p:last-child {
+  color: var(--muted);
+}
+
+.review-jump-nav {
+  position: sticky;
+  top: 77px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 900px;
+  margin: 0 auto 22px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(18, 21, 24, 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.review-jump-nav a {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid;
+  border-radius: 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.review-jump-nav a.ok {
+  border-color: rgba(184, 243, 74, 0.5);
+  color: var(--accent);
+}
+
+.review-jump-nav a.fail {
+  border-color: rgba(255, 115, 115, 0.5);
+  color: var(--red);
+}
+
+.exam-review-all {
+  display: grid;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.exam-review-all > section {
+  scroll-margin-top: 130px;
+}
+
+.review-end-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 30px;
+}
+
