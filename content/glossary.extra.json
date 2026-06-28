@@ -52,7 +52,7 @@
   {"term":"Variable-Length Path","definition":"Cypher-Pfad mit variabler Anzahl von Beziehungen, etwa *1..3.","topic":"graph","tags":["Cypher","Paths"]},
   {"term":"Zero-Length Path","definition":"Pfad der Länge 0, der nur den Startknoten enthält.","topic":"graph","tags":["Cypher","Paths"]},
   {"term":"MATCH","definition":"Cypher-Klausel zum Finden von Graphmustern.","topic":"graph","tags":["Cypher","Query"]},
-  {"term":"WHERE","definition":"Cypher-Klausel zum Filtern gematchter Ergebnisse.","topic":"graph","tags":["Cypher","Query"]},
+  {"term":"WHERE","definition":"Cypher-Subklausel, die ein MATCH-/OPTIONAL-MATCH-Pattern einschränkt oder nach WITH Zwischenergebnisse filtert.","topic":"graph","tags":["Cypher","Query"]},
   {"term":"RETURN","definition":"Cypher-Klausel zur Ausgabe von Ausdrücken, Variablen oder Aggregaten.","topic":"graph","tags":["Cypher","Query"]},
   {"term":"DISTINCT","definition":"Cypher-Schlüsselwort zum Entfernen von Duplikaten.","topic":"graph","tags":["Cypher","Aggregation"]},
   {"term":"collect","definition":"Cypher-Aggregatfunktion, die Werte in einer Liste sammelt.","topic":"graph","tags":["Cypher","Aggregation"]},

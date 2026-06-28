@@ -6,14 +6,14 @@
       "en": "MATCH describes the structure that must exist in the graph: labels, relationship types, direction, and connected nodes."
     },
     "where": {
-      "de": "WHERE ergänzt Bedingungen zu einem MATCH, etwa Vergleiche, String-Prüfungen oder die Existenz weiterer Patterns. WHERE erzeugt selbst keine neuen Variablen.",
-      "en": "WHERE adds predicates to a MATCH, such as comparisons, string checks, or the existence of further patterns. WHERE does not introduce new variables by itself."
+      "de": "WHERE ist keine eigenständige Klausel. Bei MATCH oder OPTIONAL MATCH ist es eine Subklausel des direkt vorhergehenden Patterns und schränkt dieses ein; nach WITH filtert es die weitergegebenen Zeilen.",
+      "en": "WHERE is not a standalone clause. With MATCH or OPTIONAL MATCH it is a subclause of the directly preceding pattern and constrains that pattern; after WITH it filters the passed rows."
     },
     "matchExample": "MATCH (person:Person)-[:KNOWS]->(friend:Person)\nRETURN person.name, friend.name",
     "whereExample": "MATCH (person:Person)-[:KNOWS]->(friend:Person)\nWHERE person.age >= 30 AND friend.city = 'Vienna'\nRETURN person.name, friend.name",
     "takeaway": {
-      "de": "Merksatz: MATCH beantwortet „Welche Form muss die Verbindung haben?“, WHERE beantwortet „Welche der gefundenen Verbindungen erfüllen zusätzliche Bedingungen?“",
-      "en": "Takeaway: MATCH answers “What shape must the connection have?”, while WHERE answers “Which matching connections satisfy additional conditions?”"
+      "de": "Merksatz: MATCH beschreibt die Form des gesuchten Patterns. Das zugehörige WHERE ergänzt Bedingungen dieses Patterns. Erst ein WHERE nach WITH ist ein klassischer Filter einer bereits gebildeten Zwischentabelle.",
+      "en": "Takeaway: MATCH describes the shape of the requested pattern. Its WHERE adds predicates to that pattern. Only WHERE after WITH acts like a classic filter over an already formed intermediate table."
     }
   },
   "setup": {
@@ -63,7 +63,7 @@
       "title": {"de": "MATCH und WHERE zusammen", "en": "MATCH and WHERE together"},
       "question": {"de": "Finde Personen ab 30 Jahren in Vienna.", "en": "Find people aged 30 or older in Vienna."},
       "query": "MATCH (person:Person)\nWHERE person.age >= 30 AND person.city = 'Vienna'\nRETURN person.name, person.age\nORDER BY person.name",
-      "explanation": {"de": "MATCH bestimmt die Kandidatenstruktur Person. WHERE verwirft danach alle Kandidaten, deren Werte die Bedingungen nicht erfüllen.", "en": "MATCH determines the Person candidate structure. WHERE removes candidates whose values do not satisfy the predicates."},
+      "explanation": {"de": "MATCH beschreibt Person-Knoten; das direkt zugehörige WHERE ist Teil dieses Matches und ergänzt die Property-Bedingungen. Der Planner kann diese Bedingungen bereits beim Finden der Knoten nutzen.", "en": "MATCH describes Person nodes; its directly associated WHERE is part of that match and adds property predicates. The planner can use these predicates while finding nodes."},
       "expectedResult": {"de": "Bob und Eve, jeweils mit age 35.", "en": "Bob and Eve, each aged 35."}
     },
     {
@@ -518,6 +518,210 @@
       "explanation": {"de": "Der Uniqueness Constraint verhindert doppelte Person.name-Werte und legt die Grundlage für sicheres MERGE. Der Range-Index unterstützt Suchen nach room.type, erzwingt aber keine Eindeutigkeit.", "en": "The uniqueness constraint prevents duplicate Person.name values and supports safe MERGE. The range index supports lookups by room.type but does not enforce uniqueness."},
       "expectedResult": {"de": "Neo4j legt ein Schema-Constraint und einen Suchindex an.", "en": "Neo4j creates a schema constraint and a search index."},
       "pitfall": {"de": "Mehrere Statements müssen im Neo4j Browser gegebenenfalls einzeln ausgeführt werden.", "en": "Depending on the Neo4j Browser, the two statements may need to be executed separately."}
+    },
+    {
+      "id": "C49",
+      "difficulty": 2,
+      "category": "Parameters",
+      "scope": "supplemental",
+      "title": {"de": "Parameter statt String-Zusammenbau", "en": "Parameters instead of string concatenation"},
+      "question": {"de": "Wie wird eine Person sicher über einen Parameter gesucht?", "en": "How is a person safely searched using a parameter?"},
+      "query": "MATCH (person:Person {name:$name})\nRETURN person",
+      "alternative": ":param name => 'Alice'",
+      "explanation": {"de": "Der Query-Text bleibt stabil, während $name separat übergeben wird. Das verbessert Wiederverwendung und schützt Anwendungen vor Cypher-Injection durch String-Zusammenbau.", "en": "The query text remains stable while $name is supplied separately. This improves reuse and protects applications from Cypher injection caused by string concatenation."},
+      "expectedResult": {"de": "Mit dem Parameter Alice wird der Alice-Knoten geliefert.", "en": "With the Alice parameter, the Alice node is returned."}
+    },
+    {
+      "id": "C50",
+      "difficulty": 2,
+      "category": "Projection",
+      "scope": "supplemental",
+      "title": {"de": "Labels und Beziehungstypen untersuchen", "en": "Inspect labels and relationship types"},
+      "question": {"de": "Wie werden Labels eines Knotens und Typ einer Beziehung dynamisch angezeigt?", "en": "How are node labels and a relationship type displayed dynamically?"},
+      "query": "MATCH (person:Person)-[relationship]->(target)\nRETURN person.name,\n       labels(person) AS labels,\n       type(relationship) AS relationshipType,\n       labels(target) AS targetLabels",
+      "explanation": {"de": "labels liefert eine Liste, weil ein Knoten mehrere Labels tragen kann. type liefert den einzelnen Typ einer konkreten Beziehung.", "en": "labels returns a list because a node may have multiple labels. type returns the single type of a concrete relationship."},
+      "expectedResult": {"de": "Metadaten zu jedem ausgehenden Relationship-Match.", "en": "Metadata for every outgoing relationship match."}
+    },
+    {
+      "id": "C51",
+      "difficulty": 2,
+      "category": "Projection",
+      "scope": "supplemental",
+      "title": {"de": "Properties als Map ausgeben", "en": "Return properties as a map"},
+      "question": {"de": "Wie werden alle Properties eines Knotens ohne Kenntnis ihrer Namen ausgegeben?", "en": "How are all properties of a node returned without knowing their names?"},
+      "query": "MATCH (person:Person {name:'Alice'})\nRETURN properties(person) AS allProperties",
+      "explanation": {"de": "properties(person) erzeugt eine Map aus allen aktuell vorhandenen Properties. Labels sind nicht Teil dieser Map.", "en": "properties(person) creates a map of all currently present properties. Labels are not part of this map."},
+      "expectedResult": {"de": "Eine Map mit name, age und city.", "en": "A map containing name, age, and city."}
+    },
+    {
+      "id": "C52",
+      "difficulty": 3,
+      "category": "Projection",
+      "scope": "supplemental",
+      "title": {"de": "Map Projection für API-Antworten", "en": "Map projection for API responses"},
+      "question": {"de": "Wie wird aus einem Knoten eine gezielte Ergebnis-Map gebaut?", "en": "How is a targeted result map built from a node?"},
+      "query": "MATCH (person:Person {name:'Alice'})\nRETURN person {\n  .name,\n  .age,\n  location: person.city,\n  labels: labels(person)\n} AS personView",
+      "explanation": {"de": "Die Map Projection übernimmt ausgewählte Properties und ergänzt berechnete Felder. Sie eignet sich für strukturierte API-Ergebnisse.", "en": "The map projection includes selected properties and adds computed fields. It is useful for structured API results."},
+      "expectedResult": {"de": "Eine Map mit name, age, location und labels.", "en": "A map with name, age, location, and labels."}
+    },
+    {
+      "id": "C53",
+      "difficulty": 3,
+      "category": "Lists",
+      "scope": "supplemental",
+      "title": {"de": "List Comprehension", "en": "List comprehension"},
+      "question": {"de": "Wie werden aus einer Liste nur Namen mit mindestens vier Zeichen transformiert?", "en": "How are only names with at least four characters transformed from a list?"},
+      "query": "MATCH (person:Person)\nWITH collect(person.name) AS names\nRETURN [name IN names WHERE size(name) >= 4 | toUpper(name)] AS longNames",
+      "explanation": {"de": "Die List Comprehension kombiniert Iteration, optionalen Filter und Transformation in einem Ausdruck.", "en": "The list comprehension combines iteration, an optional filter, and transformation in one expression."},
+      "expectedResult": {"de": "Eine Liste wie [ALICE, CAROL, DAVE].", "en": "A list such as [ALICE, CAROL, DAVE]."}
+    },
+    {
+      "id": "C54",
+      "difficulty": 4,
+      "category": "Lists",
+      "scope": "supplemental",
+      "title": {"de": "Pattern Comprehension", "en": "Pattern comprehension"},
+      "question": {"de": "Wie werden Alices direkte Kontakte als Liste in einer Ergebniszeile berechnet?", "en": "How are Alice's direct contacts calculated as a list in one result row?"},
+      "query": "MATCH (alice:Person {name:'Alice'})\nRETURN alice.name,\n       [(alice)-[:KNOWS]->(friend:Person) | friend.name] AS friends",
+      "explanation": {"de": "Die Pattern Comprehension führt ein lokales Pattern aus und projiziert jeden Match in eine Liste, ohne die äußere Zeile zu vervielfachen.", "en": "The pattern comprehension evaluates a local pattern and projects each match into a list without multiplying the outer row."},
+      "expectedResult": {"de": "Eine Zeile für Alice mit der Liste [Bob, Dave].", "en": "One row for Alice with the list [Bob, Dave]."}
+    },
+    {
+      "id": "C55",
+      "difficulty": 3,
+      "category": "UNWIND",
+      "scope": "supplemental",
+      "title": {"de": "Liste mit UNWIND in Zeilen zerlegen", "en": "Turn a list into rows with UNWIND"},
+      "question": {"de": "Wie wird aus einer Liste eine Ergebniszeile pro Wert erzeugt?", "en": "How is one result row produced per list value?"},
+      "query": "UNWIND ['Alice', 'Bob', 'Carol'] AS name\nRETURN name, size(name) AS length",
+      "explanation": {"de": "UNWIND ist die Gegenrichtung zu collect: Listenelemente werden zu einzelnen Pipeline-Zeilen.", "en": "UNWIND is the opposite direction of collect: list elements become individual pipeline rows."},
+      "expectedResult": {"de": "Drei Zeilen mit Name und Zeichenanzahl.", "en": "Three rows with name and character count."}
+    },
+    {
+      "id": "C56",
+      "difficulty": 4,
+      "category": "UNWIND",
+      "scope": "supplemental",
+      "title": {"de": "Mehrere Datensätze idempotent importieren", "en": "Import several records idempotently"},
+      "question": {"de": "Wie werden mehrere Personen aus einer Parameterliste mit MERGE verarbeitet?", "en": "How are several people from a parameter list processed with MERGE?"},
+      "query": "UNWIND $people AS row\nMERGE (person:Person {name:row.name})\nSET person.age = row.age,\n    person.city = row.city\nRETURN count(*) AS processed",
+      "alternative": ":param people => [{name:'Fumi', age:28, city:'Tokyo'}, {name:'Hana', age:32, city:'Kyoto'}]",
+      "explanation": {"de": "UNWIND erzeugt pro Map eine Zeile. MERGE und SET laufen danach für jede Zeile, ohne den Query-Text mehrfach zu senden.", "en": "UNWIND creates one row per map. MERGE and SET then run for each row without sending the query text repeatedly."},
+      "expectedResult": {"de": "processed entspricht der Zahl der übergebenen Maps.", "en": "processed equals the number of supplied maps."}
+    },
+    {
+      "id": "C57",
+      "difficulty": 3,
+      "category": "Composed Queries",
+      "scope": "supplemental",
+      "title": {"de": "Ergebnisse mit UNION kombinieren", "en": "Combine results with UNION"},
+      "question": {"de": "Wie werden Personen aus Vienna und Berlin in einer gemeinsamen Spalte vereinigt?", "en": "How are people from Vienna and Berlin combined into one column?"},
+      "query": "MATCH (person:Person {city:'Vienna'})\nRETURN person.name AS name\nUNION\nMATCH (person:Person {city:'Berlin'})\nRETURN person.name AS name",
+      "explanation": {"de": "Beide Query-Teile müssen kompatible Spaltennamen und -anzahlen liefern. UNION entfernt doppelte Ergebniszeilen.", "en": "Both query parts must return compatible column names and counts. UNION removes duplicate result rows."},
+      "expectedResult": {"de": "Alice, Bob, Eve und Carol ohne Duplikate.", "en": "Alice, Bob, Eve, and Carol without duplicates."}
+    },
+    {
+      "id": "C58",
+      "difficulty": 3,
+      "category": "Composed Queries",
+      "scope": "supplemental",
+      "title": {"de": "UNION ALL behält Duplikate", "en": "UNION ALL retains duplicates"},
+      "question": {"de": "Wann bleiben gleiche Zeilen aus zwei Query-Teilen erhalten?", "en": "When are equal rows from two query parts retained?"},
+      "query": "MATCH (person:Person)-[:ACTED_IN]->(:Movie)\nRETURN person.name AS name\nUNION ALL\nMATCH (person:Person)-[:DIRECTED]->(:Movie)\nRETURN person.name AS name",
+      "explanation": {"de": "UNION ALL hängt Resultate aneinander, ohne sie zu deduplizieren. Personen mit mehreren ACTED_IN-Kanten erscheinen mehrfach.", "en": "UNION ALL appends results without deduplication. People with several ACTED_IN edges appear several times."},
+      "expectedResult": {"de": "Alice, Bob und Carol können mehrfach erscheinen; Dave kommt aus dem zweiten Teil.", "en": "Alice, Bob, and Carol may appear multiple times; Dave comes from the second part."}
+    },
+    {
+      "id": "C59",
+      "difficulty": 4,
+      "category": "Write",
+      "scope": "supplemental",
+      "title": {"de": "FOREACH für Updates über Listen", "en": "FOREACH for updates over lists"},
+      "question": {"de": "Wie wird auf allen Relationships eines gefundenen Pfads eine Property gesetzt?", "en": "How is a property set on every relationship of a matched path?"},
+      "query": "MATCH path = (:Person {name:'Alice'})-[:KNOWS*1..2]->(:Person {name:'Carol'})\nFOREACH (relationship IN relationships(path) |\n  SET relationship.reviewed = true\n)\nRETURN path",
+      "explanation": {"de": "FOREACH führt ausschließlich Update-Klauseln für jedes Listenelement aus. Für normale Zeilenerzeugung ist UNWIND meist passender.", "en": "FOREACH executes update clauses for each list element. UNWIND is usually more appropriate for normal row generation."},
+      "expectedResult": {"de": "Die KNOWS-Kanten jedes gematchten Alice-Carol-Pfads erhalten reviewed=true.", "en": "The KNOWS edges of each matched Alice-Carol path receive reviewed=true."}
+    },
+    {
+      "id": "C60",
+      "difficulty": 4,
+      "category": "Import",
+      "scope": "supplemental",
+      "title": {"de": "CSV-Datei laden", "en": "Load a CSV file"},
+      "question": {"de": "Wie werden Personen aus einer CSV-Datei eingelesen?", "en": "How are people read from a CSV file?"},
+      "query": "LOAD CSV WITH HEADERS FROM 'file:///people.csv' AS row\nMERGE (person:Person {name:row.name})\nSET person.age = toInteger(row.age),\n    person.city = row.city",
+      "explanation": {"de": "LOAD CSV liefert String-Werte; numerische Felder müssen konvertiert werden. Der erlaubte Importpfad hängt von der Neo4j-Konfiguration ab.", "en": "LOAD CSV returns string values; numeric fields must be converted. The permitted import path depends on Neo4j configuration."},
+      "expectedResult": {"de": "Pro CSV-Zeile wird eine Person gematcht oder erzeugt.", "en": "One person is matched or created per CSV row."},
+      "pitfall": {"de": "Große Importe benötigen Batching und passende Constraints; diese Query ist ein Lernbeispiel.", "en": "Large imports require batching and suitable constraints; this query is a learning example."}
+    },
+    {
+      "id": "C61",
+      "difficulty": 3,
+      "category": "Temporal",
+      "scope": "supplemental",
+      "title": {"de": "Datumswerte und Duration", "en": "Date values and durations"},
+      "question": {"de": "Welche Buchungen dauern bis mindestens eine Woche nach dem Check-in?", "en": "Which bookings last until at least one week after check-in?"},
+      "query": "MATCH (guest:Guest)-[booking:BOOKED]->(room:Room)\nWITH guest, room, booking,\n     booking.checkIn + duration({days:booking.nights}) AS checkOut\nWHERE checkOut >= booking.checkIn + duration('P7D')\nRETURN guest.name, room.type, booking.checkIn, checkOut",
+      "explanation": {"de": "date-Werte können mit duration addiert werden. P7D ist eine ISO-8601-Dauer von sieben Tagen.", "en": "date values can be combined with duration. P7D is an ISO-8601 duration of seven days."},
+      "expectedResult": {"de": "Alice und Ben, da ihre Buchungen mindestens sieben Nächte dauern.", "en": "Alice and Ben because their bookings last at least seven nights."}
+    },
+    {
+      "id": "C62",
+      "difficulty": 4,
+      "category": "Subqueries",
+      "scope": "supplemental",
+      "title": {"de": "COUNT-Subquery als Ausdruck", "en": "COUNT subquery as an expression"},
+      "question": {"de": "Wie wird die Zahl direkter Kontakte pro Person ohne OPTIONAL MATCH berechnet?", "en": "How is the number of direct contacts per person calculated without OPTIONAL MATCH?"},
+      "query": "MATCH (person:Person)\nRETURN person.name,\n       COUNT {\n         MATCH (person)-[:KNOWS]->(:Person)\n       } AS outgoingContacts\nORDER BY outgoingContacts DESC, person.name",
+      "explanation": {"de": "Die COUNT-Subquery ist ein Ausdruck und kann auf die äußere person zugreifen. Auch Personen ohne Matches erhalten den Wert 0.", "en": "The COUNT subquery is an expression and can access the outer person. People without matches also receive 0."},
+      "expectedResult": {"de": "Eine Zeile pro Person mit der Zahl ausgehender KNOWS-Kanten.", "en": "One row per person with the number of outgoing KNOWS edges."}
+    },
+    {
+      "id": "C63",
+      "difficulty": 4,
+      "category": "Subqueries",
+      "scope": "supplemental",
+      "title": {"de": "COLLECT-Subquery", "en": "COLLECT subquery"},
+      "question": {"de": "Wie wird pro Person eine Liste ihrer Filmrollen erzeugt?", "en": "How is a list of movie roles created per person?"},
+      "query": "MATCH (person:Person)\nRETURN person.name,\n       COLLECT {\n         MATCH (person)-[acted:ACTED_IN]->(movie:Movie)\n         RETURN movie.title + ': ' + acted.role\n       } AS roles",
+      "explanation": {"de": "Die COLLECT-Subquery liefert direkt eine Liste und bewahrt die äußere Zeile auch bei null inneren Matches.", "en": "The COLLECT subquery directly returns a list and preserves the outer row even when there are no inner matches."},
+      "expectedResult": {"de": "Jede Person erscheint einmal; Nicht-Schauspielende erhalten eine leere Liste.", "en": "Every person appears once; non-actors receive an empty list."}
+    },
+    {
+      "id": "C64",
+      "difficulty": 5,
+      "category": "Performance",
+      "scope": "supplemental",
+      "title": {"de": "EXPLAIN und PROFILE", "en": "EXPLAIN and PROFILE"},
+      "question": {"de": "Wie werden Query-Plan und tatsächliche Laufzeitstatistiken untersucht?", "en": "How are a query plan and actual runtime statistics inspected?"},
+      "query": "EXPLAIN\nMATCH (person:Person {name:$name})\nRETURN person;\n\nPROFILE\nMATCH (person:Person {name:$name})\nRETURN person;",
+      "explanation": {"de": "EXPLAIN plant, führt aber nicht aus. PROFILE führt aus und zeigt tatsächliche Rows sowie Datenbankzugriffe. Beide Präfixe helfen, Label Scans und Index Seeks zu unterscheiden.", "en": "EXPLAIN plans without executing. PROFILE executes and shows actual rows and database hits. Both prefixes help distinguish label scans from index seeks."},
+      "expectedResult": {"de": "Mit einem Person.name-Constraint sollte der Plan einen Indexzugriff statt eines vollständigen Label-Scans verwenden.", "en": "With a Person.name constraint, the plan should use an index lookup instead of a full label scan."},
+      "pitfall": {"de": "PROFILE führt schreibende Queries tatsächlich aus.", "en": "PROFILE actually executes writing queries."}
+    },
+    {
+      "id": "C65",
+      "difficulty": 4,
+      "category": "MATCH & WHERE",
+      "scope": "supplemental",
+      "title": {"de": "Dynamischer Property-Zugriff", "en": "Dynamic property access"},
+      "question": {"de": "Wie wird der zu prüfende Property-Name über einen Parameter gewählt?", "en": "How is the property name to inspect selected through a parameter?"},
+      "query": "MATCH (person:Person)\nWHERE person[$propertyName] = $expectedValue\nRETURN person.name",
+      "alternative": ":param propertyName => 'city'\n:param expectedValue => 'Vienna'",
+      "explanation": {"de": "Eckige Klammern erlauben dynamischen Property-Zugriff. Werte bleiben ebenfalls parametrisiert.", "en": "Square brackets allow dynamic property access. Values remain parameterized as well."},
+      "expectedResult": {"de": "Mit city/Vienna werden Alice, Bob und Eve geliefert.", "en": "With city/Vienna, Alice, Bob, and Eve are returned."}
+    },
+    {
+      "id": "C66",
+      "difficulty": 5,
+      "category": "Paths",
+      "scope": "supplemental",
+      "title": {"de": "Moderne quantified relationship syntax", "en": "Modern quantified relationship syntax"},
+      "question": {"de": "Wie wird ein KNOWS-Pfad von ein bis drei Kanten in moderner Cypher-Syntax geschrieben?", "en": "How is a one-to-three-edge KNOWS path written using modern Cypher syntax?"},
+      "query": "MATCH path = (:Person {name:'Alice'})-[:KNOWS]->{1,3}(target:Person)\nRETURN DISTINCT target.name, length(path)",
+      "alternative": "MATCH path = (:Person {name:'Alice'})-[:KNOWS*1..3]->(target:Person)\nRETURN DISTINCT target.name, length(path)",
+      "explanation": {"de": "Die quantified relationship syntax ist GQL-näher. Die ältere *1..3-Syntax bleibt für Vorlesungsfragen wichtig und ist im bestehenden Material weit verbreitet.", "en": "Quantified relationship syntax is closer to GQL. The older *1..3 syntax remains important for lecture questions and is widespread in the existing material."},
+      "expectedResult": {"de": "Beide Varianten beschreiben in diesem Fall Pfade mit ein bis drei KNOWS-Kanten.", "en": "Both variants describe paths with one to three KNOWS edges in this case."}
     }
   ]
 }

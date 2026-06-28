@@ -357,8 +357,8 @@
       "en": "Cypher is a declarative, pattern-based query language for property graphs."
     },
     "details": {
-      "de": ["MATCH findet Muster, WHERE filtert, RETURN projiziert.", "Beziehungsrichtung und Pfadlänge sind prüfungsrelevant.", "Aggregationen gruppieren implizit über nicht aggregierte Felder."],
-      "en": ["MATCH finds patterns, WHERE filters, RETURN projects.", "Relationship direction and path length are exam-relevant.", "Aggregations group implicitly by non-aggregate fields."]
+      "de": ["MATCH beschreibt Muster; das zugehörige WHERE schränkt sie ein; RETURN projiziert.", "Beziehungsrichtung und Pfadlänge sind prüfungsrelevant.", "Aggregationen gruppieren implizit über nicht aggregierte Felder."],
+      "en": ["MATCH describes patterns; its WHERE constrains them; RETURN projects.", "Relationship direction and path length are exam-relevant.", "Aggregations group implicitly by non-aggregate fields."]
     },
     "examples": {
       "de": ["MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) RETURN c.name, a.code"],

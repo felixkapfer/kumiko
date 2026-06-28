@@ -53,8 +53,8 @@ Regeln:
 - `difficulty` liegt zwischen `1` und `5`.
 - `status` ist optional und kann `active`, `archived` oder `deleted` sein.
   Fehlt der Wert, gilt `active`.
-- Jede Option benötigt eine eindeutige `id`, `text` und den booleschen Wert
-  `correct`.
+- Jede Option benötigt eine eindeutige `id`, zweisprachige Felder für `text`
+  und `explanation` sowie den booleschen Wert `correct`.
 - Es dürfen 0 bis alle Optionen korrekt sein.
 - Die App wertet ausschließlich exakte Auswahlmengen als richtig.
 - `context`, `source` und `tags` sind optional, aber für anspruchsvolle Fragen
@@ -65,9 +65,9 @@ Ein direkt kopierbares Paket steht in
 
 ## Mehrsprachige Felder
 
-Für zweisprachige Fragen kann bei `prompt`, `context`, `explanation`,
-`options[].text` und `options[].explanation` statt eines Strings auch ein
-Objekt verwendet werden:
+Jede Frage muss vollständig zweisprachig sein. Bei `prompt`, `context`,
+`explanation`, `options[].text` und `options[].explanation` wird deshalb ein
+Objekt mit deutschem und englischem Text verwendet:
 
 ```json
 {
@@ -76,9 +76,11 @@ Objekt verwendet werden:
 }
 ```
 
-Wenn ein englischer Text fehlt, wird im deutschen Modus weiterhin der deutsche
-Text genutzt. Im englischen Übungs- und Prüfungsmodus werden nur Fragen
-verwendet, die englische Texte oder `languages: ["de", "en"]` besitzen.
+`languages: ["de", "en"]` ist nur Metadaten und ersetzt keine Übersetzung.
+Eine Frage gilt erst dann als zweisprachig, wenn Prompt, optionaler Kontext,
+Gesamterklärung sowie Text und Erklärung jeder Antwortoption in beiden
+Sprachen vorhanden sind. Unvollständige Fragen werden beim Laden oder Import
+abgelehnt.
 
 ## Prompt-Vorlage für spätere KI-Fragen
 

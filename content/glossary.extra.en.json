@@ -52,7 +52,7 @@
   {"term":"Variable-Length Path","definition":"Cypher path with a variable number of relationships, such as *1..3.","topic":"graph"},
   {"term":"Zero-Length Path","definition":"Path of length 0 containing only the start node.","topic":"graph"},
   {"term":"MATCH","definition":"Cypher clause for finding graph patterns.","topic":"graph"},
-  {"term":"WHERE","definition":"Cypher clause for filtering matched results.","topic":"graph"},
+  {"term":"WHERE","definition":"Cypher subclause that constrains a MATCH/OPTIONAL MATCH pattern or filters intermediate rows after WITH.","topic":"graph"},
   {"term":"RETURN","definition":"Cypher clause for outputting expressions, variables or aggregates.","topic":"graph"},
   {"term":"DISTINCT","definition":"Cypher keyword for removing duplicates.","topic":"graph"},
   {"term":"collect","definition":"Cypher aggregate function collecting values into a list.","topic":"graph"},

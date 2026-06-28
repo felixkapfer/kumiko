@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 import server
+from kumiko.storage import StateStore
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,13 +22,28 @@ class ContentTests(unittest.TestCase):
         self.assertTrue(all(entry.get("detail") for entry in payload["glossary"]))
         self.assertEqual(len(payload["questions"]), 250)
         self.assertGreaterEqual(
-            len(payload["cypherExamples"]["examples"]), 40
+            len(payload["cypherExamples"]["examples"]), 60
         )
         self.assertEqual(len(payload["slides"]), 5)
-        self.assertGreaterEqual(
-            sum("en" in question.get("_languages", []) for question in payload["questions"]),
-            175,
+        self.assertTrue(
+            all(
+                question.get("_languages") == ["de", "en"]
+                for question in payload["questions"]
+            )
         )
+
+    def test_every_question_field_is_complete_in_german_and_english(self) -> None:
+        for question in server.load_content()["questions"]:
+            for field in ("prompt", "explanation"):
+                self.assertTrue(question[field]["de"].strip(), question["id"])
+                self.assertTrue(question[field]["en"].strip(), question["id"])
+            if "context" in question:
+                self.assertTrue(question["context"]["de"].strip(), question["id"])
+                self.assertTrue(question["context"]["en"].strip(), question["id"])
+            for option in question["options"]:
+                for field in ("text", "explanation"):
+                    self.assertTrue(option[field]["de"].strip(), question["id"])
+                    self.assertTrue(option[field]["en"].strip(), question["id"])
 
     def test_question_ids_and_option_ids_are_unique(self) -> None:
         question_ids: set[str] = set()
@@ -39,6 +55,11 @@ class ContentTests(unittest.TestCase):
                 option_ids = [option["id"] for option in question["options"]]
                 self.assertEqual(len(option_ids), len(set(option_ids)))
                 self.assertIn(question.get("_status", "active"), {"active", "archived", "deleted"})
+
+        translations = json.loads(
+            (ROOT / "content" / "questions.en.json").read_text(encoding="utf-8")
+        )["translations"]
+        self.assertEqual(set(translations), question_ids)
 
     def test_topics_and_difficulty_are_valid(self) -> None:
         payload = server.load_content()
@@ -199,6 +220,13 @@ class ContentTests(unittest.TestCase):
             {example["difficulty"] for example in examples},
             {1, 2, 3, 4, 5},
         )
+        self.assertGreaterEqual(
+            sum(
+                example.get("scope") == "supplemental"
+                for example in examples
+            ),
+            10,
+        )
         for example in examples:
             self.assertIn(example["difficulty"], range(1, 6))
             self.assertTrue(example["category"])
@@ -211,6 +239,9 @@ class ContentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "state.sqlite3"
             payload = {
+                "version": 2,
+                "courseId": "adbs",
+                "examId": "practical-test-3-2026",
                 "language": "en",
                 "progress": {
                     "q-1": {
@@ -256,8 +287,10 @@ class ContentTests(unittest.TestCase):
                 ],
             }
 
-            saved = server.save_user_state(payload, database)
-            loaded = server.load_user_state(database)
+            store = StateStore(database)
+            store.initialize("adbs", "practical-test-3-2026")
+            saved = store.save_state(payload)
+            loaded = store.load_state("adbs", "practical-test-3-2026")
 
             self.assertTrue(saved["hasData"])
             self.assertEqual(loaded["language"], "en")

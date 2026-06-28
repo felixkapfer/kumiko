@@ -391,7 +391,7 @@
       },
       {
         "title": "Cypher-Patterns",
-        "body": "Cypher ist deklarativ und basiert auf Pattern Matching. MATCH bindet Variablen; WHERE filtert; RETURN projiziert Ergebnisse.",
+        "body": "Cypher ist deklarativ und basiert auf Pattern Matching. MATCH bindet Variablen; das zugehörige WHERE schränkt das Pattern ein; RETURN projiziert Ergebnisse. Nach WITH kann WHERE Zwischenergebnisse filtern.",
         "bullets": [
           "() matcht einen beliebigen Knoten, (p:Person) einen Person-Knoten und {name: 'Alice'} Properties.",
           "[:TYPE] schränkt einen Beziehungstyp ein; [r:TYPE] bindet zusätzlich die Beziehung.",

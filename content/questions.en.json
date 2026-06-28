@@ -1,0 +1,723 @@
+{
+  "version": 1,
+  "translations": {
+    "nosql-001": {
+      "prompt": "Which mappings between a NoSQL category and its central characteristic are correct?",
+      "options": {
+        "a": {"text": "Key-value stores typically treat the value as an opaque byte sequence from the DBMS perspective.", "explanation": "The semantics of the value are primarily handled by the application."},
+        "b": {"text": "Document stores can understand and filter fields within a document.", "explanation": "This is precisely what distinguishes them from pure key-value stores."},
+        "c": {"text": "Graph databases treat relationships only as derived metadata without their own type or properties.", "explanation": "Relationships are first-class citizens and can have both a type and properties."},
+        "d": {"text": "Wide-column stores typically address values using more than a single simple key.", "explanation": "Bigtable uses a row key, column, and timestamp."}
+      },
+      "explanation": "The categories differ in which structure the DBMS understands and optimizes for access."
+    },
+    "nosql-002": {
+      "prompt": "Which statements about aggregates in NoSQL systems are correct?",
+      "options": {
+        "a": {"text": "An aggregate can be the unit of access, update, and distribution.", "explanation": "This is the central idea of aggregate orientation."},
+        "b": {"text": "Atomic changes to one aggregate are often easier than atomic changes across multiple aggregates.", "explanation": "Aggregate boundaries frequently also form transaction boundaries."},
+        "c": {"text": "Once chosen, an aggregate boundary is equally optimal for every workload.", "explanation": "Different access patterns can favor conflicting boundaries."},
+        "d": {"text": "Graph databases are typically considered aggregate-ignorant.", "explanation": "Much of their information lies in relationships between small entities."}
+      },
+      "explanation": "Aggregates optimize data used together but create trade-offs for other access paths."
+    },
+    "nosql-003": {
+      "prompt": "Which statements about sharding and replication are correct?",
+      "options": {
+        "a": {"text": "Sharding distributes different data ranges across multiple nodes.", "explanation": "It roughly corresponds to horizontal fragmentation."},
+        "b": {"text": "Replication maintains multiple copies of the same data.", "explanation": "Replicas improve fault tolerance and read performance, among other benefits."},
+        "c": {"text": "Primary-secondary replication normally allows every secondary to write independently to the same object.", "explanation": "Writes are processed through the primary."},
+        "d": {"text": "Peer-to-peer replication can create additional write-write conflicts.", "explanation": "Concurrent writes on different nodes can conflict."}
+      },
+      "explanation": "Sharding and replication solve different problems and can be used together."
+    },
+    "nosql-004": {
+      "prompt": "Which statements correctly describe BASE?",
+      "options": {
+        "a": {"text": "Basically Available means that the system appears essentially available.", "explanation": "This is BA in BASE."},
+        "b": {"text": "Soft State permits replicas to temporarily have different states.", "explanation": "The state does not have to be fully consistent at all times."},
+        "c": {"text": "Eventual Consistency guarantees a fixed maximum convergence time.", "explanation": "A specific time bound is not part of the guarantee."},
+        "d": {"text": "If no further updates occur, replicas should eventually converge.", "explanation": "That is exactly what eventual consistency means."}
+      },
+      "explanation": "BASE deliberately provides weaker, distribution-friendly guarantees than full ACID."
+    },
+    "nosql-005": {
+      "prompt": "Which statements use the CAP terms according to the lecture definitions?",
+      "options": {
+        "a": {"text": "Availability requires a response to every request received by a non-failing node.", "explanation": "This is the precise definition used in the slides."},
+        "b": {"text": "Consistency means single-copy consistency.", "explanation": "The system behaves like a single copy processing operations sequentially."},
+        "c": {"text": "Partition Tolerance means that a network partition must never occur.", "explanation": "The system is meant to continue operating despite a partition."},
+        "d": {"text": "A system is available in the CAP sense as soon as any one cluster node is running.", "explanation": "That is much weaker than CAP availability."}
+      },
+      "explanation": "Many CAP mistakes arise from imprecise everyday definitions of availability and consistency."
+    },
+    "nosql-006": {
+      "prompt": "Which conclusions from CAP and PACELC are correct?",
+      "options": {
+        "a": {"text": "Because network partitions cannot be ruled out reliably, AP versus CP is the practically relevant CAP decision.", "explanation": "A CA system would stop operating during a partition."},
+        "b": {"text": "PACELC additionally considers the trade-off between latency and consistency when no partition exists.", "explanation": "This is the EL/C part."},
+        "c": {"text": "PA/EC favors consistency during a partition and latency otherwise.", "explanation": "PA means availability during a partition; EC means consistency in the else case."},
+        "d": {"text": "CAP requires a system to permanently choose exactly two of the three properties, regardless of operating conditions.", "explanation": "The critical trade-off applies during a partition, and the properties are not purely binary."}
+      },
+      "explanation": "PACELC separates the partition case from normal operation."
+    },
+    "nosql-007": {
+      "prompt": "A system has replication factor N = 7. Which (R,W) pairs satisfy both quorum conditions?",
+      "context": "The required conditions are 2W > N and R + W > N.",
+      "options": {
+        "a": {"text": "R = 3, W = 4", "explanation": "2W=8>7, but R+W=7 is not greater than 7."},
+        "b": {"text": "R = 4, W = 4", "explanation": "8>7 and 8>7."},
+        "c": {"text": "R = 2, W = 6", "explanation": "12>7 and 8>7."},
+        "d": {"text": "R = 6, W = 2", "explanation": "R+W=8, but 2W=4 is not greater than 7."}
+      },
+      "explanation": "Both inequalities must be checked independently."
+    },
+    "nosql-008": {
+      "prompt": "Which statements about quorum consensus are correct?",
+      "options": {
+        "a": {"text": "ROWA uses R = 1 and W = N.", "explanation": "Read One, Write All."},
+        "b": {"text": "The condition R + W > N guarantees that a read reaches at least one replica involved in the latest write.", "explanation": "The read and write quorums must intersect."},
+        "c": {"text": "The condition 2W > N prevents two write quorums from being disjoint.", "explanation": "Two sets that each contain more than N/2 elements overlap."},
+        "d": {"text": "Version stamps are fundamentally unnecessary when the quorum conditions are satisfied.", "explanation": "The newest version still has to be identified within a read quorum."}
+      },
+      "explanation": "Quorums ensure overlap; versioning identifies the current value."
+    },
+    "nosql-009": {
+      "prompt": "Which rules for Lamport clocks are correct?",
+      "options": {
+        "a": {"text": "Before sending a message, the sender increments its local counter.", "explanation": "The incremented value is attached to the message."},
+        "b": {"text": "When receiving timestamp t, the local counter is set to max(local,t)+1.", "explanation": "This places the receive logically after the send."},
+        "c": {"text": "Equal Lamport timestamps on two processes prove that they represent the same event.", "explanation": "Independent events can have the same scalar value."},
+        "d": {"text": "C(e) < C(e') always implies e → e'.", "explanation": "Lamport clocks satisfy only the implication in the other direction."}
+      },
+      "explanation": "Lamport timestamps respect causality but do not capture it completely."
+    },
+    "nosql-010": {
+      "prompt": "Which values result from this Lamport-clock sequence?",
+      "context": "Initially, A=2 and B=5. A sends m1 to B. B then sends m2 to A. There are no other events.",
+      "options": {
+        "a": {"text": "m1 carries timestamp 3.", "explanation": "A increments before sending: 2→3."},
+        "b": {"text": "After receiving m1, B is at 6.", "explanation": "max(5,3)+1=6."},
+        "c": {"text": "m2 carries timestamp 7.", "explanation": "B increments before sending: 6→7."},
+        "d": {"text": "After receiving m2, A is at 7.", "explanation": "max(3,7)+1=8."}
+      },
+      "explanation": "Every send increments first; every receive uses the maximum plus one."
+    },
+    "nosql-011": {
+      "prompt": "Which statements about the weak and strong clock properties are correct?",
+      "options": {
+        "a": {"text": "Lamport clocks satisfy e→e' ⇒ C(e)<C(e').", "explanation": "This is the weak clock property."},
+        "b": {"text": "Lamport clocks satisfy C(e)<C(e') ⇒ e→e'.", "explanation": "Independent event sequences can receive ordered scalar timestamps."},
+        "c": {"text": "Vector clocks satisfy e→e' if and only if VC(e)<VC(e').", "explanation": "They satisfy the strong clock property."},
+        "d": {"text": "Concurrent events necessarily receive identical vectors with vector clocks.", "explanation": "They typically receive incomparable, non-identical vectors."}
+      },
+      "explanation": "The key advantage of vector clocks is that they reveal causality and concurrency."
+    },
+    "nosql-012": {
+      "prompt": "Which comparisons of the following vector clocks are correct?",
+      "context": "x=(3,2,5), y=(3,4,5), z=(4,1,6), w=(3,4,6). Comparison is component-wise.",
+      "options": {
+        "a": {"text": "x < y", "explanation": "Every component of x is ≤ the corresponding component of y, and the second is strictly smaller."},
+        "b": {"text": "y < w", "explanation": "Only the third component increases from 5 to 6."},
+        "c": {"text": "x < z", "explanation": "x has 2>1 in the second component, so the vectors are incomparable."},
+        "d": {"text": "z and w are incomparable.", "explanation": "z is greater in component 1, while w is greater in component 2."}
+      },
+      "explanation": "For <, every component must be ≤ and at least one must be strictly smaller. Crossing components mean incomparability."
+    },
+    "nosql-013": {
+      "prompt": "Process B with vector clock (2,5,1) receives a message from A carrying (4,3,2). Which statements are correct?",
+      "options": {
+        "a": {"text": "After taking the component-wise maximum but before the local increment, B is at (4,5,2).", "explanation": "The maximum per component is (4,5,2)."},
+        "b": {"text": "After completing the receive operation, B is at (4,6,2).", "explanation": "B then increments its own second component."},
+        "c": {"text": "B must increment its first component because the message came from A.", "explanation": "The receiver always increments its own component."},
+        "d": {"text": "The new vector is smaller than the received vector.", "explanation": "It is component-wise greater than or equal, and strictly greater in B's component."}
+      },
+      "explanation": "Receive operation: first take the component-wise maximum, then increment the receiver's component."
+    },
+    "nosql-014": {
+      "prompt": "Which mappings between a session guarantee and its meaning are correct?",
+      "options": {
+        "a": {"text": "Read-Your-Writes: after its own write, a session reads at least that version.", "explanation": "A session's own writes do not disappear from its view."},
+        "b": {"text": "Monotonic Reads: a session never later reads an older version than one it has already read.", "explanation": "The versions read by the session move monotonically forward."},
+        "c": {"text": "Monotonic Writes: writes from the same session may be observed by others in any order.", "explanation": "The guarantee is specifically intended to preserve their order."},
+        "d": {"text": "Writes-Follow-Reads preserves causal dependencies between a read and a subsequent write.", "explanation": "Anyone who sees the later write should also see the state read before it, or a newer state."}
+      },
+      "explanation": "These guarantees are concrete forms of causal or session-related consistency."
+    },
+    "nosql-015": {
+      "prompt": "A system has replication factor N = 8. Which of the following quorum configurations satisfy both conditions?",
+      "context": "The required conditions are 2W > N and R + W > N. It is possible that no option is correct.",
+      "options": {
+        "a": {"text": "R = 4, W = 4", "explanation": "2W=8 is not strictly greater than 8, and R+W is only 8."},
+        "b": {"text": "R = 5, W = 4", "explanation": "R+W=9 is sufficient, but 2W=8 is not strictly greater than 8."},
+        "c": {"text": "R = 3, W = 5", "explanation": "2W=10 is sufficient, but R+W=8 is not strictly greater than 8."},
+        "d": {"text": "R = 1, W = 7", "explanation": "2W=14 is sufficient, but R+W=8 is not strictly greater than 8."}
+      },
+      "explanation": "No option is correct. With even N, the strict inequalities are a common exam trap."
+    },
+    "kv-001": {
+      "prompt": "Which statements typically characterize key-value stores correctly?",
+      "options": {
+        "a": {"text": "Values are addressed by keys.", "explanation": "This is the fundamental access model."},
+        "b": {"text": "The internal semantics of a value are typically known only to the application.", "explanation": "The store largely treats values as byte sequences."},
+        "c": {"text": "Complex ad-hoc joins are part of the typical core access pattern.", "explanation": "Point lookups by key usually dominate."},
+        "d": {"text": "Many systems are optimized for high write rates and scalability.", "explanation": "These are central goals of this category."}
+      },
+      "explanation": "Key-value stores simplify the query model in favor of speed and scalability."
+    },
+    "kv-002": {
+      "prompt": "Which statements about Bitcask's file organization are correct?",
+      "options": {
+        "a": {"text": "At any time, exactly one data file is active and writable.", "explanation": "All new entries are appended to that file."},
+        "b": {"text": "When an entry is updated, closed files are overwritten at the corresponding position.", "explanation": "Closed files are immutable."},
+        "c": {"text": "A delete is represented by an appended tombstone.", "explanation": "Deletions are append-only as well."},
+        "d": {"text": "An update creates a new version of the entry.", "explanation": "The older version remains physically present until the merge."}
+      },
+      "explanation": "Bitcask performs all changes as sequential appends."
+    },
+    "kv-003": {
+      "prompt": "Which information does Bitcask's keydir store for every live key?",
+      "options": {
+        "a": {"text": "file_id", "explanation": "It identifies the data file."},
+        "b": {"text": "Offset and value size", "explanation": "They enable a targeted disk read."},
+        "c": {"text": "The complete value itself", "explanation": "The value remains in the data file."},
+        "d": {"text": "Timestamp of the newest version", "explanation": "It is part of the metadata structure."}
+      },
+      "explanation": "The keydir keeps keys and fixed-size metadata in RAM, not all values."
+    },
+    "kv-004": {
+      "prompt": "A Bitcask processes put(k,A), put(k,B), delete(k), and put(k,C) in that order. Which statements are then correct?",
+      "options": {
+        "a": {"text": "The files physically contain four appended entries for k.", "explanation": "Two puts, one tombstone, and another put were appended."},
+        "b": {"text": "The keydir points to the entry containing C.", "explanation": "It is the newest live version."},
+        "c": {"text": "The tombstone must remain permanently in the keydir.", "explanation": "Deleting removes k from the keydir; the later put adds it again."},
+        "d": {"text": "Get(k) can read C with at most one targeted disk access.", "explanation": "The keydir provides the file, offset, and size."}
+      },
+      "explanation": "Physical history and the current logical state are separate in append-only stores."
+    },
+    "kv-005": {
+      "prompt": "Which statements about Bitcask merging and hint files are correct?",
+      "options": {
+        "a": {"text": "The merge processes inactive data files.", "explanation": "The active file remains available for ongoing writes."},
+        "b": {"text": "Obsolete versions and keys deleted by newer tombstones can be removed.", "explanation": "This reduces space amplification."},
+        "c": {"text": "Hint files contain complete values in compressed form.", "explanation": "They contain no values, only position and size information."},
+        "d": {"text": "After the merge, affected keydir entries must point to new positions.", "explanation": "The live values were written to new files."}
+      },
+      "explanation": "Merging cleans up history; hint files accelerate startup and recovery."
+    },
+    "kv-006": {
+      "prompt": "Which statements about Bitcask's strengths and weaknesses are correct?",
+      "options": {
+        "a": {"text": "Writes are predominantly sequential appends.", "explanation": "This enables high throughput."},
+        "b": {"text": "The number of keys can grow arbitrarily, independently of available RAM.", "explanation": "All keys and keydir metadata reside in RAM."},
+        "c": {"text": "Point queries are very efficient.", "explanation": "They require the keydir and at most one disk read."},
+        "d": {"text": "Range queries are a natural and efficient core access pattern in Bitcask.", "explanation": "Bitcask essentially supports point queries."}
+      },
+      "explanation": "Bitcask trades RAM usage and limited query types for very simple, fast operations."
+    },
+    "kv-007": {
+      "prompt": "Which components of a LevelDB-style LSM tree reside in RAM?",
+      "options": {
+        "a": {"text": "Mutable memtable", "explanation": "It is the entry point for new reads and writes."},
+        "b": {"text": "Immutable memtable while it is being flushed", "explanation": "It temporarily remains an in-memory structure."},
+        "c": {"text": "Every SSTable from every level in full", "explanation": "SSTables reside on disk; only parts such as indexes may be cached."},
+        "d": {"text": "Only the write-ahead log", "explanation": "The WAL must be persisted on disk."}
+      },
+      "explanation": "Memtables are volatile; the WAL and SSTables provide persistence."
+    },
+    "kv-008": {
+      "prompt": "Which statements correctly distinguish flushing from compaction?",
+      "options": {
+        "a": {"text": "A flush writes an immutable memtable as an SSTable to level 0.", "explanation": "This is the transition from RAM to disk."},
+        "b": {"text": "Compaction merges SSTables and removes obsolete versions.", "explanation": "Data are often moved to the next level in the process."},
+        "c": {"text": "A flush immediately guarantees non-overlapping key ranges in level 0.", "explanation": "Level 0 may contain overlapping SSTables."},
+        "d": {"text": "Compaction reduces read and space amplification but increases write amplification.", "explanation": "Data have to be read and written again."}
+      },
+      "explanation": "Flushing persists new data; compaction reorganizes data that are already persistent."
+    },
+    "kv-009": {
+      "prompt": "Which statements about leveling and tiering are correct?",
+      "options": {
+        "a": {"text": "Leveling keeps SSTable key ranges non-overlapping within higher levels.", "explanation": "A point lookup therefore checks at most one SSTable per level."},
+        "b": {"text": "Tiering permits overlapping SSTables and thus typically favors writes.", "explanation": "Less immediate merging reduces write cost."},
+        "c": {"text": "Leveling fundamentally causes less write amplification than tiering.", "explanation": "Leveling typically rewrites data more often."},
+        "d": {"text": "Tiering can increase read amplification.", "explanation": "Several overlapping files may be relevant."}
+      },
+      "explanation": "Leveling is more read-friendly, while tiering is more write-friendly."
+    },
+    "kv-010": {
+      "prompt": "Which order correctly describes an LSM get operation?",
+      "options": {
+        "a": {"text": "Mutable memtable, immutable memtable, then SSTables starting at level 0.", "explanation": "The search proceeds from the newest to older layers."},
+        "b": {"text": "At level 0, multiple SSTables may be checked from newest to oldest when necessary.", "explanation": "Their key ranges may overlap."},
+        "c": {"text": "At every level above 0, all SSTables must always be read.", "explanation": "With non-overlapping ranges, at most one can contain the key."},
+        "d": {"text": "A tombstone that is found means logically 'not present' and ends the search.", "explanation": "The newest version is a deletion."}
+      },
+      "explanation": "The search order must prioritize the most recent versions."
+    },
+    "kv-011": {
+      "prompt": "Which statements about Bloom filters in LSM trees are correct?",
+      "options": {
+        "a": {"text": "A negative result proves that the key is not in this SSTable.", "explanation": "Bloom filters have no false negatives."},
+        "b": {"text": "A positive result proves that the key is present.", "explanation": "False positives are possible."},
+        "c": {"text": "Bloom filters help avoid unnecessary SSTable accesses.", "explanation": "Many files can be ruled out before a disk read."},
+        "d": {"text": "Bloom filters completely replace the sorted block index.", "explanation": "After a possible match, the relevant block is located using structures such as fence pointers."}
+      },
+      "explanation": "Bloom filters answer either 'definitely no' or 'possibly yes'."
+    },
+    "kv-012": {
+      "prompt": "An SSTable's Bloom filter returns a negative result even though the requested key is actually stored there. Which statements are correct?",
+      "options": {
+        "a": {"text": "This is a permitted false negative of a normal Bloom filter.", "explanation": "Normal Bloom filters have no false negatives."},
+        "b": {"text": "The Bloom filter or its use is faulty.", "explanation": "An element that is present must not test negative."},
+        "c": {"text": "A higher false-positive rate could explain this behavior.", "explanation": "False positives concern absent elements that produce a positive result."},
+        "d": {"text": "The store could incorrectly skip the SSTable and return a wrong read result.", "explanation": "This is exactly why the no-false-negative property is necessary."}
+      },
+      "explanation": "A negative Bloom-filter result is used as a definitive exclusion."
+    },
+    "kv-013": {
+      "prompt": "Which statements about an LSM range scan over [kmin,kmax] are correct?",
+      "options": {
+        "a": {"text": "Relevant memtables must be considered.", "explanation": "They may contain the newest versions."},
+        "b": {"text": "Every SSTable whose key range overlaps the interval may contain relevant entries.", "explanation": "It must be included in the merge."},
+        "c": {"text": "A merge-like evaluation determines the newest version for each key.", "explanation": "Older values and tombstones must be resolved correctly."},
+        "d": {"text": "The ordering of SSTables is useless for range queries.", "explanation": "It enables efficient iterators and merge processing."}
+      },
+      "explanation": "Range scans are possible, but their data are distributed across multiple sorted, time-layered sources."
+    },
+    "kv-014": {
+      "prompt": "Which comparisons among Bitcask, LSM trees, and B+ trees are correct?",
+      "options": {
+        "a": {"text": "Bitcask is typically simpler and more direct than an LSM tree for point queries.", "explanation": "The keydir plus one disk read is very efficient."},
+        "b": {"text": "LSM trees support range queries better than log-structured hash tables.", "explanation": "Keys and SSTables are sorted."},
+        "c": {"text": "LSM trees achieve high write rates partly through sequential writes and memtable buffering.", "explanation": "This is their main strength compared with B+ trees."},
+        "d": {"text": "LSM trees avoid every form of background I/O.", "explanation": "Flushing and especially compaction cause substantial background work."}
+      },
+      "explanation": "The structures optimize different workloads; no design dominates every access pattern."
+    },
+    "doc-001": {
+      "prompt": "Which statements distinguish document stores from pure key-value stores?",
+      "options": {
+        "a": {"text": "A document store typically understands fields inside JSON, XML, or BSON documents.", "explanation": "This enables structure-aware queries."},
+        "b": {"text": "A document store can filter by field values.", "explanation": "This is one of its extended query capabilities."},
+        "c": {"text": "A key-value store must never store JSON as a value.", "explanation": "It can store JSON but typically does not understand its structure."},
+        "d": {"text": "Document stores always require an identical rigid schema for every document.", "explanation": "Flexible document structures are a typical characteristic."}
+      },
+      "explanation": "The decisive factor is not the file format alone, but whether the DBMS understands the structure."
+    },
+    "doc-002": {
+      "prompt": "Which principles of document modeling are correct?",
+      "options": {
+        "a": {"text": "The expected access pattern should influence the model.", "explanation": "Document models are workload-oriented."},
+        "b": {"text": "Data that must be changed atomically together should preferably reside in one document.", "explanation": "Single-document operations form the natural atomicity boundary."},
+        "c": {"text": "The maximum BSON document size can be ignored when arrays are used.", "explanation": "Arrays are also part of the document, whose maximum size is 16 MB."},
+        "d": {"text": "Index decisions are part of data modeling.", "explanation": "They follow from the intended access patterns."}
+      },
+      "explanation": "Accesses, updates, atomicity, growth, validation, and indexes must be considered together."
+    },
+    "doc-003": {
+      "prompt": "Which modeling decisions match the cardinalities discussed in the lecture?",
+      "options": {
+        "a": {"text": "One-to-few: store dependent objects as an embedded array in the one-side document.", "explanation": "Small sets that are read together fit well in one document."},
+        "b": {"text": "One-to-millions: always embed millions of subdocuments in a single array.", "explanation": "Document growth and the 16 MB limit favor separate collections."},
+        "c": {"text": "One-to-thousands: a list of references on the one side can be suitable.", "explanation": "This is one of the variants presented in the slides."},
+        "d": {"text": "One-to-millions: separate collections with a reference from the many side are typically suitable.", "explanation": "This keeps the one-side document bounded."}
+      },
+      "explanation": "Cardinality is an important decision factor, but not the only one."
+    },
+    "doc-004": {
+      "prompt": "A customer has up to 30 orders. The customer and recent orders are almost always read together, and orders are rarely changed after completion. Which statements are plausible?",
+      "options": {
+        "a": {"text": "Embedding the orders can reduce the frequent combined query to one document read.", "explanation": "The access pattern favors embedding."},
+        "b": {"text": "Single-document updates to the customer and an embedded order can be atomic.", "explanation": "Both pieces of data lie within the same atomicity boundary."},
+        "c": {"text": "The solution is always optimal, regardless of document growth and the 16 MB limit.", "explanation": "Size and growth still have to be checked."},
+        "d": {"text": "If there were millions of orders with frequent individual updates, references would be more suitable.", "explanation": "An unbounded embedded array would then be problematic."}
+      },
+      "explanation": "Embedding is a workload-specific optimization, not a universal rule."
+    },
+    "doc-005": {
+      "prompt": "Which statements about denormalization are correct?",
+      "options": {
+        "a": {"text": "It redundantly copies data to avoid additional reads or joins.", "explanation": "That is its main purpose."},
+        "b": {"text": "It automatically makes updates across multiple documents atomic.", "explanation": "Redundancy actually aggravates the problem of non-atomic multi-document updates."},
+        "c": {"text": "It is especially attractive when the read-to-write ratio is high.", "explanation": "Many fast reads can justify rare, expensive updates."},
+        "d": {"text": "Denormalizing one-side data into the many side can spread one change across many documents.", "explanation": "This can greatly increase update costs."}
+      },
+      "explanation": "Denormalization trades consistency and update effort for faster reads."
+    },
+    "doc-006": {
+      "prompt": "A relational many-to-many Student–Lecture relationship is modeled using two collections. Each student stores lecture IDs, each lecture stores student IDs, and the actual exam data are stored separately. Which statements are correct?",
+      "options": {
+        "a": {"text": "Neighborhood access from either side can avoid scanning the other collection.", "explanation": "Both document types contain reference lists."},
+        "b": {"text": "Adding a relationship requires consistent changes to at least two documents.", "explanation": "Both reference lists must be updated."},
+        "c": {"text": "An empty reference list [] is semantically identical to a missing field.", "explanation": "[] represents an existing but empty relationship list; a missing field may mean something else."},
+        "d": {"text": "This model eliminates all redundancy.", "explanation": "The relationship is represented redundantly on both sides."}
+      },
+      "explanation": "Bidirectional references speed up reads but increase maintenance effort."
+    },
+    "doc-007": {
+      "prompt": "Which statements about MongoDB replica sets are correct?",
+      "options": {
+        "a": {"text": "Writes are executed on the primary.", "explanation": "The primary is the write entry point."},
+        "b": {"text": "Secondaries replay the primary's operations from logs in the same order.", "explanation": "This is how replication is performed."},
+        "c": {"text": "An arbiter stores a full data copy but cannot vote.", "explanation": "The reverse is true: it votes but stores no data."},
+        "d": {"text": "If the primary fails, secondaries can hold an election.", "explanation": "A new primary can be elected."}
+      },
+      "explanation": "Replica sets combine primary-secondary replication with automatic election."
+    },
+    "doc-008": {
+      "prompt": "Which statements about MongoDB read preferences are correct?",
+      "options": {
+        "a": {"text": "primary is the default preference.", "explanation": "Reads go to the primary by default."},
+        "b": {"text": "secondaryPreferred reads from a secondary if possible and otherwise from the primary.", "explanation": "This is its fallback semantics."},
+        "c": {"text": "nearest necessarily selects the server with the most recent data.", "explanation": "Network latency, not freshness, is decisive."},
+        "d": {"text": "Reads from secondaries may return stale data.", "explanation": "Replication is not necessarily synchronous."}
+      },
+      "explanation": "Read preference determines the target node and affects latency, load, and possible staleness."
+    },
+    "doc-009": {
+      "prompt": "Which statements correctly distinguish write concern, read concern, and read preference?",
+      "options": {
+        "a": {"text": "Write concern w:2 requires acknowledgements from two servers.", "explanation": "A concrete number can be specified."},
+        "b": {"text": "j:true requires the write to be recorded in the on-disk journal.", "explanation": "This strengthens the durability guarantee."},
+        "c": {"text": "Read concern majority and read preference secondary are identical settings.", "explanation": "Concern determines the required view; preference determines the read target."},
+        "d": {"text": "Read concern local reads the current value of the selected read target.", "explanation": "This is the default read concern."}
+      },
+      "explanation": "Where a read occurs and which version is acceptable are separate decisions."
+    },
+    "doc-010": {
+      "prompt": "Which statements about MongoDB transactions are correct?",
+      "options": {
+        "a": {"text": "Single-document operations are atomic even without an explicit multi-document transaction.", "explanation": "This is the preferred, fast atomicity boundary."},
+        "b": {"text": "Multi-document ACID transactions have existed since MongoDB 4.0.", "explanation": "They were introduced in 2018."},
+        "c": {"text": "With transactions, choosing suitable document boundaries becomes irrelevant.", "explanation": "Single-document operations remain faster and simpler."},
+        "d": {"text": "A session can commit or abort a transaction.", "explanation": "commitTransaction and abortTransaction are provided."}
+      },
+      "explanation": "MongoDB supports ACID across multiple documents but still recommends aggregate-appropriate modeling."
+    },
+    "doc-011": {
+      "prompt": "Which components belong to a MongoDB sharded cluster?",
+      "options": {
+        "a": {"text": "At least two shards", "explanation": "The slides specify two or more."},
+        "b": {"text": "One or more mongos query routers", "explanation": "They route requests."},
+        "c": {"text": "Config servers configured as a replica set", "explanation": "They store cluster metadata and configuration."},
+        "d": {"text": "Every shard must be a single, non-replicated file.", "explanation": "A shard is operated as a replica set."}
+      },
+      "explanation": "Sharding and replication are nested within each other in MongoDB."
+    },
+    "doc-012": {
+      "prompt": "Given db.books.find({price: {$gte: 10, $lte: 20}}, {title: true, _id: false}), which statements are correct?",
+      "options": {
+        "a": {"text": "It searches for books priced between 10 and 20 inclusive.", "explanation": "$gte and $lte are inclusive."},
+        "b": {"text": "The result includes title.", "explanation": "title:true includes the field in the projection."},
+        "c": {"text": "The _id field is suppressed.", "explanation": "_id:false explicitly excludes it."},
+        "d": {"text": "The query modifies the matching documents.", "explanation": "find is a read operation."}
+      },
+      "explanation": "The first document is the filter, and the second is the projection."
+    },
+    "doc-013": {
+      "prompt": "Which statements about MongoDB updates are correct?",
+      "options": {
+        "a": {"text": "$set can change an existing field or add a new one.", "explanation": "It sets the specified field value."},
+        "b": {"text": "$unset removes a field.", "explanation": "The field is deleted from the document."},
+        "c": {"text": "updateMany({}, {$inc:{x:1}}) increments x in every document in the collection.", "explanation": "The empty query matches every document."},
+        "d": {"text": "updateOne is guaranteed to update every matching document.", "explanation": "It updates only one matching document."}
+      },
+      "explanation": "The query, update operator, and one/many variant determine the scope and effect."
+    },
+    "doc-014": {
+      "prompt": "A system must return the names of all guests who checked in during a given year. Bookings change frequently, while guest names change very rarely. Which design statements are defensible?",
+      "options": {
+        "a": {"text": "Storing guest_name and a derived year directly in each booking can support the target query without a join.", "explanation": "This deliberately denormalizes for the frequent read."},
+        "b": {"text": "A rare guest rename may require updates to multiple booking documents.", "explanation": "This is the cost of redundant names."},
+        "c": {"text": "Because bookings are written frequently, every form of denormalization is automatically invalid.", "explanation": "The concrete trade-off may still be worthwhile; the extra fields are small and the query is important."},
+        "d": {"text": "An index on year can support filtering.", "explanation": "The derived field creates a direct, indexable access path."}
+      },
+      "explanation": "Good document models optimize the concrete workload and state their update costs explicitly."
+    },
+    "graph-001": {
+      "prompt": "Which statements correctly describe the property-graph model?",
+      "options": {
+        "a": {"text": "Nodes can have labels.", "explanation": "Labels express roles in the application domain."},
+        "b": {"text": "Relationships are named and directed.", "explanation": "Type and direction are core components."},
+        "c": {"text": "Only nodes, but not relationships, can carry properties.", "explanation": "Both can have key-value properties."},
+        "d": {"text": "Relationships are treated as first-class citizens.", "explanation": "They are central, directly stored data objects."}
+      },
+      "explanation": "Property graphs model nodes and relationships explicitly and enrich both with properties."
+    },
+    "graph-002": {
+      "prompt": "Which transformations from a relational model to a graph model are correct?",
+      "options": {
+        "a": {"text": "An entity table typically becomes a node label.", "explanation": "Each row then becomes a node with that label."},
+        "b": {"text": "A foreign key can be replaced by a relationship.", "explanation": "The relationship becomes explicit."},
+        "c": {"text": "A many-to-many junction table can become a relationship whose additional columns become relationship properties.", "explanation": "This is the natural transformation."},
+        "d": {"text": "Technical primary keys must always remain visible node properties.", "explanation": "The slides recommend removing purely technical primary keys."}
+      },
+      "explanation": "The graph model removes relational navigation artifacts and makes relationships direct."
+    },
+    "graph-003": {
+      "prompt": "Which statements about Neo4j are correct according to the lecture?",
+      "options": {
+        "a": {"text": "Writes always run inside a transaction.", "explanation": "The transaction may be explicit or implicit."},
+        "b": {"text": "The default isolation level is READ_COMMITTED.", "explanation": "Higher isolation can be achieved using explicit locks."},
+        "c": {"text": "Secondaries must be updated synchronously before every commit.", "explanation": "Secondaries are replicated asynchronously."},
+        "d": {"text": "Bookmarks can support read-your-writes or causal consistency.", "explanation": "They causally connect consecutive transactions."}
+      },
+      "explanation": "Neo4j combines ACID transactions with replicated cluster operation."
+    },
+    "graph-004": {
+      "prompt": "Which Cypher pattern elements are interpreted correctly?",
+      "options": {
+        "a": {"text": "(p:Person) binds p to a node with the Person label.", "explanation": "It combines a variable and a label."},
+        "b": {"text": "-[:ACTED_IN]-> requires a directed relationship of that type.", "explanation": "Both direction and type are specified."},
+        "c": {"text": "-[r]- binds r to a relationship of any type and either direction.", "explanation": "There is no type or direction restriction."},
+        "d": {"text": "() means that no node may exist at this position.", "explanation": "() matches any anonymous node."}
+      },
+      "explanation": "Anonymous pattern elements are matched but are not bound to variables."
+    },
+    "graph-005": {
+      "prompt": "Which statements about relationship uniqueness within a Cypher pattern are correct?",
+      "options": {
+        "a": {"text": "The same stored relationship is not used twice for two pattern edges within one pattern.", "explanation": "In the co-actor example, this prevents matching the same ACTED_IN edge in both directions."},
+        "b": {"text": "The same node may never occur twice in a pattern.", "explanation": "The restriction concerns relationships, not nodes in general."},
+        "c": {"text": "Splitting a query into two MATCH clauses allows a relationship to be matched again in separate patterns.", "explanation": "Uniqueness applies per pattern."},
+        "d": {"text": "The rule means that a relationship type may occur only once globally in a query.", "explanation": "Multiple different relationships of the same type are entirely valid."}
+      },
+      "explanation": "The rule concerns the identity of a relationship within one pattern."
+    },
+    "graph-006": {
+      "prompt": "Which path lengths are allowed by the following Cypher expressions?",
+      "options": {
+        "a": {"text": "[:R*2] allows exactly two R relationships.", "explanation": "A single number without dots specifies a fixed length."},
+        "b": {"text": "[:R*1..3] allows lengths 1, 2, and 3.", "explanation": "Both bounds are inclusive."},
+        "c": {"text": "[:R*0..1] can also match only the starting node.", "explanation": "Length 0 is allowed."},
+        "d": {"text": "[:R*..2] requires at least two relationships.", "explanation": "The upper bound is 2; the lower bound is not 2."}
+      },
+      "explanation": "Minimum and maximum hops describe relationship counts, not node counts."
+    },
+    "graph-007": {
+      "prompt": "Which statements about path variables and shortest-path functions are correct?",
+      "options": {
+        "a": {"text": "nodes(p) returns the nodes of a path.", "explanation": "relationships(p) correspondingly returns its relationships."},
+        "b": {"text": "length(p) counts the relationships in the path.", "explanation": "It does not count the nodes."},
+        "c": {"text": "shortestPath returns one shortest path per match.", "explanation": "It does not necessarily return one global path across all target nodes."},
+        "d": {"text": "allShortestPaths also returns longer alternatives that are not shortest.", "explanation": "It returns all equally short shortest paths."}
+      },
+      "explanation": "Path length and the number of paths are separate aspects."
+    },
+    "graph-008": {
+      "prompt": "Given the following graph, which cities does the query return?",
+      "context": "HAS_AIRPORT: Vienna→VIE, Paris→CDG, Berlin→BER, Berlin→TXL\nFLIGHT: VIE→CDG, CDG→BER, VIE→TXL, TXL→VIE, BER→VIE\n\nMATCH (:City {name:'Vienna'})-[:HAS_AIRPORT]->(:Airport)-[:FLIGHT*1..2]->(a:Airport),\n      (c:City)-[:HAS_AIRPORT]->(a)\nRETURN DISTINCT c.name",
+      "options": {
+        "a": {"text": "Paris", "explanation": "VIE→CDG is one hop."},
+        "b": {"text": "Berlin", "explanation": "VIE→TXL is one hop, and VIE→CDG→BER is two hops."},
+        "c": {"text": "Vienna", "explanation": "VIE→TXL→VIE is a two-hop path back to VIE."},
+        "d": {"text": "No city, because variable-length paths cannot be combined with a second pattern.", "explanation": "The query is valid."}
+      },
+      "explanation": "The two-hop cycle causes the starting airport, and therefore Vienna, to be returned as well."
+    },
+    "graph-009": {
+      "prompt": "Given the same graph, which (Airport,length) pairs does the query return?",
+      "context": "FLIGHT: VIE→CDG, CDG→BER, VIE→TXL, TXL→VIE, BER→VIE\n\nMATCH p = allShortestPaths((a:Airport)-[:FLIGHT*]->(:Airport {code:'BER'}))\nWHERE a.code <> 'BER'\nRETURN a.code, length(p)",
+      "options": {
+        "a": {"text": "CDG, 1", "explanation": "CDG→BER is direct."},
+        "b": {"text": "VIE, 2", "explanation": "VIE→CDG→BER is the shortest path."},
+        "c": {"text": "TXL, 3", "explanation": "TXL→VIE→CDG→BER."},
+        "d": {"text": "BER, 0", "explanation": "The WHERE filter excludes a=BER."}
+      },
+      "explanation": "For each possible starting airport, the query considers its shortest directed FLIGHT connection to BER."
+    },
+    "graph-010": {
+      "prompt": "Which statements correctly distinguish CREATE from MERGE?",
+      "options": {
+        "a": {"text": "CREATE creates the specified pattern even if an identical one already exists.", "explanation": "CREATE does not check for duplicates."},
+        "b": {"text": "MERGE first attempts to match the complete specified pattern.", "explanation": "It creates the pattern only if matching fails."},
+        "c": {"text": "MERGE (p:Person {name:'Alice', age:25}) must match an existing Alice node without an age property.", "explanation": "The complete property pattern does not match, so a new node may be created."},
+        "d": {"text": "ON CREATE and ON MATCH can perform different SET actions.", "explanation": "This is an additional feature of MERGE."}
+      },
+      "explanation": "MERGE prevents duplicates only relative to the exact pattern it is supposed to match."
+    },
+    "graph-011": {
+      "prompt": "A node (:Person {name:'Alice'}) exists without an age property. What can MERGE (p:Person {name:'Alice', age:25}) do?",
+      "options": {
+        "a": {"text": "It may create a second Person node named Alice with age=25.", "explanation": "The existing node does not match the complete property pattern."},
+        "b": {"text": "It necessarily adds age=25 to the existing Alice node.", "explanation": "MERGE does not automatically patch a partial match."},
+        "c": {"text": "A uniqueness constraint on Person.name could prevent creation of the second node and raise an error.", "explanation": "The new node would violate the unique name constraint."},
+        "d": {"text": "MERGE ignores all properties while matching.", "explanation": "Properties in the MERGE pattern are part of the match."}
+      },
+      "explanation": "For controlled updates, it is often safer to MERGE on a unique key and use a separate SET."
+    },
+    "graph-012": {
+      "prompt": "Which statements about SET and DELETE are correct?",
+      "options": {
+        "a": {"text": "SET p.age = null removes the age property.", "explanation": "This is equivalent to REMOVE p.age."},
+        "b": {"text": "DELETE can remove a node with existing relationships without any further action.", "explanation": "The relationships must be deleted first, or DETACH DELETE must be used."},
+        "c": {"text": "DETACH DELETE removes a node and its incoming and outgoing relationships.", "explanation": "That is exactly its effect."},
+        "d": {"text": "A relationship can be deleted directly with DELETE.", "explanation": "After matching the relationship, DELETE r is valid."}
+      },
+      "explanation": "By default, node deletion protects against orphaned relationships."
+    },
+    "graph-013": {
+      "prompt": "Which statements about Cypher aggregation and WITH are correct?",
+      "options": {
+        "a": {"text": "Non-aggregated RETURN fields implicitly form the grouping.", "explanation": "An explicit GROUP BY is not required."},
+        "b": {"text": "count(expr) also counts NULL values of expr.", "explanation": "count(expr) counts only non-NULL values."},
+        "c": {"text": "WITH can name an aggregate and filter it with WHERE in the next query part.", "explanation": "For example: WITH p,count(*) AS n WHERE n>5."},
+        "d": {"text": "collect() creates a list of values.", "explanation": "It is a Cypher aggregation function."}
+      },
+      "explanation": "WITH is the pipeline boundary for multi-stage aggregation and filtering."
+    },
+    "graph-014": {
+      "prompt": "Which queries correctly answer: 'List cities with at least one airport from which a direct TRAIN relationship leads to another airport'?",
+      "options": {
+        "a": {"text": "MATCH (c:City)-[:HAS_AIRPORT]->(:Airport)-[:TRAIN]->(:Airport) RETURN DISTINCT c.name", "explanation": "The pattern requires exactly the requested outgoing TRAIN relationship."},
+        "b": {"text": "MATCH (c:City)-[:HAS_AIRPORT]->(a:Airport) WHERE EXISTS { (a)-[:TRAIN]->(:Airport) } RETURN DISTINCT c.name", "explanation": "The existence subquery expresses the same condition."},
+        "c": {"text": "MATCH (c:City)-[:HAS_AIRPORT]->(:Airport)<-[:TRAIN]-(:Airport) RETURN DISTINCT c.name", "explanation": "This requires an incoming TRAIN relationship to the city's airport."},
+        "d": {"text": "MATCH (:Airport)-[:TRAIN]->(a:Airport)<-[:HAS_AIRPORT]-(c:City) RETURN DISTINCT c.name", "explanation": "This also lists destinations of incoming TRAIN relationships, not their origin cities."}
+      },
+      "explanation": "For directed relationships, arrow direction determines the origin and destination city."
+    },
+    "column-001": {
+      "prompt": "Which statements explain the advantage of classical column stores for analytics?",
+      "options": {
+        "a": {"text": "A query can read only the columns it actually needs.", "explanation": "This reduces I/O for wide tables."},
+        "b": {"text": "Values in one column share the same data type and often have similar distributions.", "explanation": "This improves compression and processing."},
+        "c": {"text": "SIMD and good cache locality fit column-wise processing.", "explanation": "The same operation is applied to many values."},
+        "d": {"text": "Every single-row insertion automatically becomes cheaper than in a row store.", "explanation": "Updates across separate, compressed columns can be expensive."}
+      },
+      "explanation": "Column stores optimize selective analytical scans, not every workload in general."
+    },
+    "column-002": {
+      "prompt": "Which statements about explicit and virtual IDs are correct?",
+      "options": {
+        "a": {"text": "Explicit IDs store a tuple ID with every column value.", "explanation": "This allows values from the same row to be connected."},
+        "b": {"text": "Explicit IDs increase data volume and I/O.", "explanation": "The IDs are stored with every column."},
+        "c": {"text": "Virtual IDs can use a value's position as its identity.", "explanation": "The offset replaces a separate ID column."},
+        "d": {"text": "Variable-width compression always makes virtual IDs easier.", "explanation": "It makes direct offset calculation more difficult."}
+      },
+      "explanation": "Virtual IDs save space but require stable, computable positions."
+    },
+    "column-003": {
+      "prompt": "Which statements about run-length encoding are correct?",
+      "options": {
+        "a": {"text": "It stores sequences of equal values as (value, repetition count).", "explanation": "This is the RLE principle."},
+        "b": {"text": "It works especially well for long consecutive repetitions.", "explanation": "Many entries can then be represented by one pair."},
+        "c": {"text": "For alternating or almost entirely unique values, it can be worse than uncompressed storage.", "explanation": "The metadata for every short run adds overhead."},
+        "d": {"text": "It necessarily preserves a directly computable fixed byte position for every original value.", "explanation": "Variable run lengths make virtual offsets harder to compute."}
+      },
+      "explanation": "RLE depends heavily on the order of the values."
+    },
+    "column-004": {
+      "prompt": "Which mappings between data and compression methods are plausible?",
+      "options": {
+        "a": {"text": "Long sequences of the same invoice date → Run-Length Encoding", "explanation": "Long runs are ideal for RLE."},
+        "b": {"text": "Birth month with only 12 possible values → Bit-Vector Encoding", "explanation": "A small domain is suitable."},
+        "c": {"text": "Long recurring address strings → Dictionary Encoding", "explanation": "Long values are replaced with short IDs."},
+        "d": {"text": "A column containing almost only NULL → Null Suppression", "explanation": "Sparse values are stored without the many NULLs."}
+      },
+      "explanation": "All mappings correspond to typical use cases of the methods."
+    },
+    "column-005": {
+      "prompt": "Which general statements about the size comparison of RLE, bit-vector, and dictionary encoding are correct?",
+      "options": {
+        "a": {"text": "RLE can be smaller or larger than bit-vector encoding, depending on the data.", "explanation": "Long runs favor RLE, while frequent changes may favor bitmaps."},
+        "b": {"text": "Dictionary encoding is always smaller than RLE for every possible column.", "explanation": "No method dominates every data distribution."},
+        "c": {"text": "Bit-vector encoding can require enormous space when there are very many distinct values.", "explanation": "It generally needs one bit string per value."},
+        "d": {"text": "The concrete value distribution and ordering are decisive.", "explanation": "Compression choices are column- and application-specific."}
+      },
+      "explanation": "Without concrete data, comparisons usually do not yield an unambiguous ranking."
+    },
+    "column-006": {
+      "prompt": "Which statements about operations on compressed data are correct?",
+      "options": {
+        "a": {"text": "A SUM over RLE data can multiply values by their repetition counts.", "explanation": "A full expansion is not required."},
+        "b": {"text": "Direct processing can save I/O and decompression costs.", "explanation": "This is the ideal performance gain."},
+        "c": {"text": "Every arbitrary operation automatically works on every compression format.", "explanation": "The query engine needs method-specific implementations."},
+        "d": {"text": "Compressed execution can make the system more complex.", "explanation": "Many formats and operator variants must be supported."}
+      },
+      "explanation": "Compression and query execution can be integrated, but not for free."
+    },
+    "column-007": {
+      "prompt": "Which statements correctly distinguish early from late materialization?",
+      "options": {
+        "a": {"text": "Early materialization assembles rows shortly after reading the columns.", "explanation": "This is early reconstruction."},
+        "b": {"text": "Late materialization works with individual columns and position lists for as long as possible.", "explanation": "This preserves column-oriented advantages."},
+        "c": {"text": "Early materialization typically promotes further vectorization and compression benefits.", "explanation": "It loses many of these benefits early."},
+        "d": {"text": "Some aggregations can avoid full materialization entirely.", "explanation": "If only filtered values from one column are aggregated, position references are sufficient."}
+      },
+      "explanation": "Materialization is needed when attributes must be combined, but its timing is crucial."
+    },
+    "column-008": {
+      "prompt": "Given Ra=[(1,3),(2,16),(3,25),(4,9),(5,5),(6,31)], what does select(Ra,5,20) return?",
+      "options": {
+        "a": {"text": "Position 2", "explanation": "Ra[2]=16 lies within the inclusive interval."},
+        "b": {"text": "Position 4", "explanation": "Ra[4]=9 qualifies."},
+        "c": {"text": "Position 5", "explanation": "Ra[5]=5 lies on the inclusive lower bound."},
+        "d": {"text": "Position 3", "explanation": "Ra[3]=25 is greater than 20."}
+      },
+      "explanation": "select returns position IDs, not the values themselves."
+    },
+    "column-009": {
+      "prompt": "Execute the late-materialization plan mentally. Which intermediate results are correct?",
+      "context": "Ra=[(1,3),(2,16),(3,25),(4,9),(5,5),(6,31)]\nRb=[(1,12),(2,34),(3,17),(4,56),(5,22),(6,34)]\nSa=[(1,34),(2,22),(3,17)]\n\ninter1=select(Ra,5,20)\ninter2=reconstruct(Rb,inter1)\nright=reverse(Sa)\njoin_res=join(inter2,right)",
+      "options": {
+        "a": {"text": "inter1 = [2,4,5]", "explanation": "The values 16, 9, and 5 qualify."},
+        "b": {"text": "inter2 = [(2,34),(4,56),(5,22)]", "explanation": "Rb is reconstructed at the three positions."},
+        "c": {"text": "right = [(34,1),(22,2),(17,3)]", "explanation": "reverse swaps value and pos."},
+        "d": {"text": "join_res = [(2,1),(4,3),(5,2)]", "explanation": "Rb=56 at position 4 has no match in Sa."}
+      },
+      "explanation": "The correct join_res is [(2,1),(5,2)]."
+    },
+    "column-010": {
+      "prompt": "Continue the plan from the previous question. Which statements are correct?",
+      "context": "join_res=[(2,1),(5,2)]\ninter3=voidTail(join_res)\ninter4=reconstruct(Ra,inter3)\nresult=sum(inter4)",
+      "options": {
+        "a": {"text": "inter3 = [2,5]", "explanation": "voidTail keeps the left position."},
+        "b": {"text": "inter4 = [(2,16),(5,5)]", "explanation": "Ra is reconstructed only for the surviving R positions."},
+        "c": {"text": "result = 21", "explanation": "16+5=21."},
+        "d": {"text": "Complete R and S tuples must additionally be materialized for the result.", "explanation": "The aggregation needs only positions and the required Ra column."}
+      },
+      "explanation": "The example shows how late materialization avoids unnecessary reconstruction."
+    },
+    "column-011": {
+      "prompt": "Which statements about updates in column stores are correct?",
+      "options": {
+        "a": {"text": "An insert can require writes to several separate column files.", "explanation": "Every attribute of the new row must be added."},
+        "b": {"text": "An update in a compressed column can cause decompression and recompression.", "explanation": "In the worst case, the structure must be rebuilt."},
+        "c": {"text": "A separate write store can accept new changes in an update-friendly form.", "explanation": "The large read store remains optimized."},
+        "d": {"text": "Queries may ignore the write store until it has been merged into the read store.", "explanation": "Queries must evaluate both stores and combine the results."}
+      },
+      "explanation": "Read and write stores separate optimized layouts but require combined query evaluation."
+    },
+    "column-012": {
+      "prompt": "Which statements correctly describe Bigtable?",
+      "options": {
+        "a": {"text": "Bigtable can be understood as a map from row key, column, and timestamp to a value.", "explanation": "This is the central data model."},
+        "b": {"text": "Rows are stored lexicographically by their keys.", "explanation": "The key choice therefore controls data locality."},
+        "c": {"text": "A tablet is the unit of distribution and load balancing.", "explanation": "It groups consecutive rows."},
+        "d": {"text": "Transactions across arbitrarily many rows are the primary guaranteed atomicity boundary.", "explanation": "Access within a single row is atomic."}
+      },
+      "explanation": "Bigtable is a distributed, sparse, versioned wide-column map."
+    },
+    "column-013": {
+      "prompt": "Which statements about Bigtable column families and versions are correct?",
+      "options": {
+        "a": {"text": "Column families must be created explicitly before data can be stored.", "explanation": "They form the stable schema core."},
+        "b": {"text": "A family can contain a very large number of qualifiers.", "explanation": "The number of columns in a family is practically unbounded."},
+        "c": {"text": "Cell versions are stored in descending timestamp order.", "explanation": "The newest versions come first."},
+        "d": {"text": "Garbage collection can be configured only globally for the entire table.", "explanation": "Retention options are specified per column family."}
+      },
+      "explanation": "Families are coarse, explicit groups; qualifiers and versions provide flexible fine-grained structure."
+    },
+    "column-014": {
+      "prompt": "Which statements about Bigtable infrastructure and related systems are correct?",
+      "options": {
+        "a": {"text": "GFS stores log and data files.", "explanation": "It is the distributed file-system foundation."},
+        "b": {"text": "SSTables are immutable files sorted by key and equipped with a block index.", "explanation": "They are a central persistent format."},
+        "c": {"text": "Chubby is a distributed lock service and an entry point for locating Bigtable data.", "explanation": "It coordinates the system and helps clients find it."},
+        "d": {"text": "According to the slides, HBase and Cassandra have identical master architectures and PACELC classifications.", "explanation": "HBase is master-based PC/EC; Cassandra is masterless PA/EL."}
+      },
+      "explanation": "Wide-column systems share ideas but make different architecture and consistency decisions."
+    }
+  }
+}
