@@ -13,12 +13,22 @@
 
 ## Phase 1: finish modularization
 
-- Split `app.js` into view and feature modules
-- Split `styles.css` into tokens, layout, components, and feature styles
-- Split `adbs_legacy.py` into loader, glossary enrichment, and question
-  generation modules
-- Add route and catalog unit tests
-- Add browser smoke tests
+Status markers: `[x]` done, `[~]` in progress, `[ ]` not started.
+
+- [~] Split `app.js` into view and feature modules. Extracted so far:
+  `core/html.js`, `core/i18n.js`, `core/exam-config.js`,
+  `state/persistence.js`, `views/cypher-view.js`, plus `api.js`,
+  `course-context.js`, `language-state.js`, `question-language.js`.
+  Still inline: all nine view renderers, `navigate`, and `render`.
+- [x] Split `styles.css` into tokens, layout, components, and feature styles.
+  `styles.css` is now an `@import` barrel over `assets/css/`.
+- [ ] Split `adbs_legacy.py` into loader, glossary enrichment, and question
+  generation modules. Roughly half the file is literal data dictionaries, so
+  this is mostly data extraction rather than restructuring.
+- [~] Add route and catalog unit tests. Catalog is covered; no test imports
+  `kumiko.web`, so the HTTP routes are still untested.
+- [ ] Add browser smoke tests. Blocked on wanting zero dependencies; the
+  current substitute is the manual click-through in `AGENTS.md`.
 
 ## Phase 2: generic course authoring
 
@@ -54,9 +64,15 @@
 - CSRF/security hardening for non-local use
 - CI for tests and Docker builds
 - Versioned course bundle format
+- Cache versioning for `assets/js` modules, which are imported without a `?v=`
+  query and are served without `Cache-Control`
 
 ## Next recommended feature
 
-Complete the frontend split before adding another large feature. The first
-extraction should move persistence/context, navigation, and the Cypher view out
-of `app.js`, followed by practice and exam features.
+Complete the frontend split before adding another large feature. Persistence,
+context, i18n, exam configuration, and the Cypher view are out of `app.js`.
+
+The next extractions are the view renderers, in this order: practice, exam,
+exam review, dashboard and learn, glossary, slides, question pool. `navigate`
+and `render` should move last: their shape is determined by how the views are
+extracted, so moving them earlier guarantees rework.

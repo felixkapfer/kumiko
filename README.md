@@ -39,8 +39,13 @@ Danach `http://127.0.0.1:8000` öffnen.
 docker compose up --build
 ```
 
-Die Daten liegen im Volume `kumiko-data`. Der Container veröffentlicht Port
-`8000` und besitzt einen Healthcheck.
+Die Daten liegen im Volume `kumiko-data`. Der Container lauscht intern auf Port
+`8000` und besitzt einen Healthcheck. `docker-compose.override.yml` veröffentlicht
+ihn nach außen auf `8080`, die App ist also unter `http://127.0.0.1:8080`
+erreichbar.
+
+Inhalte werden per `COPY` ins Image gebacken. Änderungen an `content/` oder
+`courses/` erscheinen deshalb erst nach `docker compose up --build`.
 
 ## Kurse und Klausuren
 

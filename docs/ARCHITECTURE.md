@@ -69,6 +69,11 @@ labels for reusable frontend slots, and structured paper-study material.
 
 Progress from one exam can therefore never overwrite another exam.
 
+### State schema
+
+`kumiko/state_schema.py` validates the client state payload before it reaches
+storage. It is pure validation: no HTTP, no database access.
+
 ### HTTP
 
 `kumiko/web.py` maps requests to catalog, content, and storage services. Domain
@@ -82,7 +87,32 @@ for the selected course/exam.
 Reusable modules currently exist for:
 
 - API access;
-- course/exam context normalization.
+- course/exam context normalization;
+- HTML escaping (`core/html.js`);
+- translation, view titles, and difficulty labels (`core/i18n.js`);
+- exam configuration and scoring presentation (`core/exam-config.js`);
+- state payloads, plus reading and clearing legacy browser storage
+  (`state/persistence.js`);
+- the Cypher example view (`views/cypher-view.js`).
+
+Extracted modules never import from `app.js`. Dependencies point one way, so a
+cycle is structurally impossible. Two patterns carry this:
+
+- **State mutators take `state` as their first argument**, as in
+  `changeLanguage(state, language)` and `applyStoredState(state, stored)`.
+- **View and label builders are pure**: they receive plain data plus the active
+  language and return a value, as in `cypherViewHtml({ ... })` and
+  `viewTitleFor(view, language, navigation)`.
+
+`app.js` owns the mutable `state` object and hands it down. Where a signature
+gained a parameter, `app.js` keeps a small same-named wrapper so call sites did
+not have to change. Deciding *when* to migrate legacy browser data stays in
+`app.js` (`loadState`), because it has to call `saveState`.
+
+Static files are served without `Cache-Control`, so `index.html` cache-busts
+`app.js` and `styles.css` with a `?v=` query. The modules that `app.js` imports
+carry no version query, so editing one can serve stale bytes to a browser that
+already cached it. Hard-reload when verifying frontend changes.
 
 The remaining `app.js` controller is legacy code. It must be split by feature:
 
