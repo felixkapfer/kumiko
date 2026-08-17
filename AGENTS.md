@@ -46,12 +46,18 @@ docker compose config
 - `kumiko/catalog.py`: course/exam manifests only.
 - `kumiko/content.py`: content-provider dispatch only.
 - `kumiko/storage.py`: persistence and state validation only.
+- `kumiko/state_schema.py`: client state payload validation only.
 - `kumiko/web.py`: HTTP transport only.
 - `kumiko/adbs_legacy.py`: temporary ADBS adapter. Do not add generic platform
   behavior here.
-- `assets/js/`: reusable frontend modules.
+- `assets/js/`: reusable frontend modules. `core/` holds shared helpers,
+  `state/` holds persistence, `views/` holds view builders.
 - `app.js`: legacy ADBS UI controller. New independent features should be
   extracted into modules rather than making this file larger.
+
+Extracted frontend modules must never import from `app.js`. State mutators take
+`state` as their first argument; view and label builders are pure and receive
+the active language explicitly.
 
 ## Size and quality rules
 
