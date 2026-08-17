@@ -1,8 +1,5 @@
 import {
   DIFFICULTY_LABELS,
-  buildExam,
-  buildSplitExam,
-  formatDue,
   masteryForTopic,
   questionStatus,
   scoreExam,
@@ -27,40 +24,46 @@ import {
   supportedQuestionLanguages,
 } from "./assets/js/question-language.js";
 import { cypherViewHtml } from "./assets/js/views/cypher-view.js";
+import { escapeHtml } from "./assets/js/core/html.js";
+import {
+  difficultyLabel as difficultyLabelFor,
+  glossaryDefinition as glossaryDefinitionFor,
+  glossaryTerm as glossaryTermFor,
+  isKnownView,
+  translate,
+  translated,
+  viewTitleFor,
+} from "./assets/js/core/i18n.js";
+import {
+  applyExamDefaults as applyExamDefaultsTo,
+  buildConfiguredExam as buildConfiguredExamFor,
+  dueLabel as dueLabelFor,
+  examConfig as examConfigFor,
+  examDefaults as examDefaultsFor,
+  examSetupValues as examSetupValuesFor,
+  examSplitGroups as examSplitGroupsFor,
+  examSplitSummary as examSplitSummaryFor,
+  formatPoints as formatPointsFor,
+  fullCreditLabel as fullCreditLabelFor,
+  officialExamConfig as officialExamConfigFor,
+  questionScore as questionScoreFor,
+  scoringConfig as scoringConfigFor,
+  scoringLabels as scoringLabelsFor,
+  scoringNote as scoringNoteFor,
+  scoringShortLabel as scoringShortLabelFor,
+  signedSelectionScoring as signedSelectionScoringFor,
+} from "./assets/js/core/exam-config.js";
+import {
+  LEGACY_COURSE_ID,
+  LEGACY_EXAM_ID,
+  MAX_EXAM_HISTORY,
+  applyStoredState,
+  buildStatePayload,
+  clearLegacyBrowserState,
+  legacyBrowserState,
+  normalizeCustomQuestions,
+} from "./assets/js/state/persistence.js";
 
-const STORAGE_KEY = "adbs-exam-prep-state-v1";
-const CUSTOM_KEY = "adbs-exam-prep-custom-questions-v1";
-const OVERRIDES_KEY = "adbs-exam-prep-question-overrides-v1";
-const LANGUAGE_KEY = "adbs-exam-prep-language-v1";
-const EXAM_HISTORY_KEY = "adbs-exam-prep-exam-history-v1";
-const LEGACY_COURSE_ID = "adbs";
-const LEGACY_EXAM_ID = "practical-test-3-2026";
-const MAX_EXAM_HISTORY = 25;
-const VIEW_TITLES = {
-  dashboard: { de: "Überblick", en: "Dashboard" },
-  learn: { de: "Lernstoff", en: "Study notes" },
-  coding: { de: "Cypher-Beispiele", en: "Cypher examples" },
-  practice: { de: "Fragen trainieren", en: "Practice questions" },
-  exam: { de: "Prüfungssimulation", en: "Exam simulation" },
-  history: { de: "Prüfungsverlauf", en: "Exam history" },
-  glossary: { de: "Glossar", en: "Glossary" },
-  slides: { de: "Slides", en: "Slides" },
-  library: { de: "Fragenpool", en: "Question pool" },
-};
-
-const UI = {
-  "nav.dashboard": { de: "Überblick", en: "Dashboard" },
-  "nav.learn": { de: "Lernstoff", en: "Study notes" },
-  "nav.coding": { de: "Cypher", en: "Cypher" },
-  "nav.practice": { de: "Fragen", en: "Questions" },
-  "nav.exam": { de: "Prüfung", en: "Exam" },
-  "nav.history": { de: "Prüfungsverlauf", en: "Exam history" },
-  "nav.glossary": { de: "Glossar", en: "Glossary" },
-  "nav.slides": { de: "Slides", en: "Slides" },
-  "nav.library": { de: "Fragenpool", en: "Question pool" },
-  "common.localOffline": { de: "lokal & offline", en: "local & offline" },
-  "common.resetProgress": { de: "Fortschritt zurücksetzen", en: "Reset progress" },
-};
 
 const state = {
   catalog: null,
@@ -113,186 +116,96 @@ let examTimer = null;
 let persistenceQueue = Promise.resolve();
 let persistenceErrorShown = false;
 
-function escapeHtml(value = "") {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
 function tr(key) {
-  return UI[key]?.[state.language] || UI[key]?.de || key;
+  return translate(key, state.language);
 }
 
 function localized(value) {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value[state.language] ?? value.de ?? value.en ?? "";
-  }
-  return value ?? "";
+  return translated(value, state.language);
 }
 
 function glossaryTerm(entry) {
-  return state.language === "en"
-    ? entry.translations?.en?.term || entry.term
-    : entry.term;
+  return glossaryTermFor(entry, state.language);
 }
 
 function glossaryDefinition(entry) {
-  return state.language === "en"
-    ? entry.translations?.en?.definition || entry.definition
-    : entry.definition;
+  return glossaryDefinitionFor(entry, state.language);
 }
 
 function viewLabel(view) {
-  const navigationLabel = state.data?.navigation?.[view];
-  if (navigationLabel) return localized(navigationLabel);
-  return VIEW_TITLES[view]?.[state.language] || VIEW_TITLES[view]?.de || view;
+  return viewTitleFor(view, state.language, state.data?.navigation);
 }
 
 function difficultyLabel(level) {
-  const labels = {
-    de: DIFFICULTY_LABELS,
-    en: {
-      1: "Basic",
-      2: "Easy",
-      3: "Medium",
-      4: "Hard",
-      5: "Extreme",
-    },
-  };
-  return labels[state.language][level] || DIFFICULTY_LABELS[level];
+  return difficultyLabelFor(level, state.language);
 }
 
 function scoringConfig() {
-  return state.data?.scoring || { type: "exact-match" };
+  return scoringConfigFor(state.data);
 }
 
 function examConfig() {
-  return state.data?.examConfig || {};
+  return examConfigFor(state.data);
 }
 
 function examDefaults() {
-  return examConfig().defaults || {};
+  return examDefaultsFor(state.data);
 }
 
 function officialExamConfig() {
-  return examConfig().official || {};
-}
-
-function clampInteger(value, fallback, min, max) {
-  const parsed = Number.parseInt(value, 10);
-  const safe = Number.isFinite(parsed) ? parsed : fallback;
-  return Math.min(Math.max(safe, min), max);
+  return officialExamConfigFor(state.data);
 }
 
 function examSplitGroups(count) {
-  const groups = examConfig().split || [];
-  const official = officialExamConfig();
-  const useOfficialCounts = Number(official.questionCount) === Number(count);
-  return groups.map((group) => ({
-    topicIds: group.topicIds || [],
-    excludeTopicIds: group.excludeTopicIds || [],
-    ratio: Number(group.ratio || 0),
-    count: useOfficialCounts ? group.officialCount : undefined,
-  }));
+  return examSplitGroupsFor(state.data, count);
 }
 
 function buildConfiguredExam(questions, count) {
-  const groups = examSplitGroups(count);
-  if (!groups.length) return buildExam(questions, count);
-  return buildSplitExam(questions, count, groups);
+  return buildConfiguredExamFor(state.data, questions, count);
 }
 
 function applyExamDefaults(data) {
-  const defaults = data.examConfig?.defaults;
-  if (!defaults) return;
-  const questionCount = Number(defaults.questionCount);
-  const durationMinutes = Number(defaults.durationMinutes);
-  if (Number.isFinite(questionCount) && questionCount > 0) {
-    state.examSetup.count = String(Math.min(questionCount, data.questions.length));
-  }
-  if (Number.isFinite(durationMinutes) && durationMinutes > 0) {
-    state.examSetup.duration = String(durationMinutes);
-  }
+  applyExamDefaultsTo(state.examSetup, data);
 }
 
 function examSetupValues() {
-  const available = activeQuestions().length;
-  const defaults = examDefaults();
-  const countFallback = Number(defaults.questionCount || state.examSetup.count || 20);
-  const durationFallback = Number(defaults.durationMinutes || state.examSetup.duration || 40);
-  return {
-    available,
-    count: clampInteger(state.examSetup.count, countFallback, 1, Math.max(available, 1)),
-    duration: clampInteger(state.examSetup.duration, durationFallback, 1, 240),
-  };
+  return examSetupValuesFor(state.data, state.examSetup, activeQuestions().length);
 }
 
 function examSplitSummary() {
-  const split = examConfig().split || [];
-  if (!split.length) return "";
-  return split
-    .map((group) => {
-      const label = localized(group.label);
-      const percentage = Math.round(Number(group.ratio || 0) * 100);
-      const officialCount = group.officialCount ? ` / ${group.officialCount}` : "";
-      return `${label}: ${percentage}%${officialCount}`;
-    })
-    .join(" · ");
+  return examSplitSummaryFor(state.data, state.language);
 }
 
 function scoringLabels() {
-  const labels = scoringConfig().labels;
-  return labels?.[state.language] || labels?.de || {};
+  return scoringLabelsFor(state.data, state.language);
 }
 
 function signedSelectionScoring() {
-  return scoringConfig().type === "signed-selection";
+  return signedSelectionScoringFor(state.data);
 }
 
 function scoringNote() {
-  const labels = scoringLabels();
-  if (labels.note) return labels.note;
-  return state.language === "de"
-    ? "Markiere exakt alle richtigen Aussagen. Es können 0 bis alle Optionen richtig sein."
-    : "Select exactly all correct statements. From 0 to all options may be correct.";
+  return scoringNoteFor(state.data, state.language);
 }
 
 function scoringShortLabel() {
-  const labels = scoringLabels();
-  if (labels.short) return labels.short;
-  return state.language === "de"
-    ? "Alles-oder-nichts-Wertung"
-    : "All-or-nothing scoring";
+  return scoringShortLabelFor(state.data, state.language);
 }
 
 function fullCreditLabel() {
-  if (signedSelectionScoring()) {
-    return state.language === "de" ? "maximal" : "maximum";
-  }
-  return state.language === "de" ? "exakt richtig" : "exactly correct";
+  return fullCreditLabelFor(state.data, state.language);
 }
 
 function formatPoints(value) {
-  if (!signedSelectionScoring()) return String(value);
-  return value > 0 ? `+${value}` : String(value);
+  return formatPointsFor(value, state.data);
 }
 
 function questionScore(question, selectedIds) {
-  return scoreQuestion(question, selectedIds, scoringConfig());
+  return questionScoreFor(state.data, question, selectedIds);
 }
 
 function dueLabel(timestamp) {
-  if (state.language === "de") return formatDue(timestamp);
-  if (!timestamp || timestamp <= Date.now()) return "now";
-  const delta = timestamp - Date.now();
-  const minutes = Math.ceil(delta / 60000);
-  if (minutes < 60) return `in ${minutes} min`;
-  const hours = Math.ceil(minutes / 60);
-  if (hours < 48) return `in ${hours} h`;
-  return `in ${Math.ceil(hours / 24)} days`;
+  return dueLabelFor(timestamp, state.language);
 }
 
 function updateStaticLanguage() {
@@ -314,16 +227,7 @@ function updateStaticLanguage() {
 }
 
 function statePayload() {
-  return {
-    version: 2,
-    courseId: state.courseId,
-    examId: state.examId,
-    progress: state.progress,
-    questionOverrides: state.questionOverrides,
-    customQuestions: state.customQuestions,
-    language: state.language,
-    examHistory: state.examHistory.slice(0, MAX_EXAM_HISTORY),
-  };
+  return buildStatePayload(state);
 }
 
 function saveState() {
@@ -346,117 +250,14 @@ function saveState() {
   return operation;
 }
 
-function legacyBrowserState() {
-  const legacy = {
-    progress: {},
-    questionOverrides: {},
-    customQuestions: [],
-    language: localStorage.getItem(LANGUAGE_KEY) || "de",
-    examHistory: [],
-  };
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    legacy.progress = stored.progress || {};
-  } catch {
-    legacy.progress = {};
-  }
-  try {
-    legacy.questionOverrides = JSON.parse(
-      localStorage.getItem(OVERRIDES_KEY) || "{}",
-    );
-  } catch {
-    legacy.questionOverrides = {};
-  }
-  try {
-    const storedHistory = JSON.parse(
-      localStorage.getItem(EXAM_HISTORY_KEY) || "[]",
-    );
-    legacy.examHistory = Array.isArray(storedHistory)
-      ? storedHistory
-          .filter(
-            (entry) =>
-              entry &&
-              entry.id &&
-              Array.isArray(entry.questions) &&
-              entry.answers &&
-              entry.finishedAt,
-          )
-          .sort((a, b) => b.finishedAt - a.finishedAt)
-          .slice(0, MAX_EXAM_HISTORY)
-      : [];
-  } catch {
-    legacy.examHistory = [];
-  }
-  try {
-    legacy.customQuestions = JSON.parse(
-      localStorage.getItem(CUSTOM_KEY) || "[]",
-    );
-  } catch {
-    legacy.customQuestions = [];
-  }
-  legacy.hasData = Boolean(
-    Object.keys(legacy.progress).length ||
-      Object.keys(legacy.questionOverrides).length ||
-      legacy.customQuestions.length ||
-      legacy.examHistory.length ||
-      localStorage.getItem(LANGUAGE_KEY),
-  );
-  return legacy;
-}
-
-function normalizeCustomQuestions(questions = []) {
-  return questions.map((question) => {
-    const status = question.status || question._status || "active";
-    return {
-      status,
-      ...question,
-      _status: status,
-      _sourceFile: question._sourceFile || "Database import",
-      _languages: supportedQuestionLanguages(question),
-    };
-  });
-}
-
-function applyStoredState(stored) {
-  state.courseId = stored.courseId || state.courseId;
-  state.examId = stored.examId || state.examId;
-  state.progress = stored.progress || {};
-  state.questionOverrides = stored.questionOverrides || {};
-  state.customQuestions = normalizeCustomQuestions(stored.customQuestions);
-  state.language = stored.language || "de";
-  state.examHistory = Array.isArray(stored.examHistory)
-    ? stored.examHistory
-        .filter(
-          (entry) =>
-            entry &&
-            entry.id &&
-            Array.isArray(entry.questions) &&
-            entry.answers &&
-            entry.finishedAt,
-        )
-        .sort((a, b) => b.finishedAt - a.finishedAt)
-        .slice(0, MAX_EXAM_HISTORY)
-    : [];
-}
-
-function clearLegacyBrowserState() {
-  [
-    STORAGE_KEY,
-    CUSTOM_KEY,
-    OVERRIDES_KEY,
-    LANGUAGE_KEY,
-    EXAM_HISTORY_KEY,
-  ].forEach((key) => localStorage.removeItem(key));
-}
-
 async function loadState(courseId = null, examId = null) {
   const stored = await fetchState(courseId, examId);
   if (stored.hasData) {
-    applyStoredState(stored);
+    applyStoredState(state, stored);
     return;
   }
 
-  applyStoredState(stored);
+  applyStoredState(state, stored);
   if (
     stored.courseId !== LEGACY_COURSE_ID ||
     stored.examId !== LEGACY_EXAM_ID
@@ -464,7 +265,7 @@ async function loadState(courseId = null, examId = null) {
     return;
   }
   const legacy = legacyBrowserState();
-  applyStoredState(legacy);
+  applyStoredState(state, legacy);
   if (legacy.hasData) {
     await saveState();
     clearLegacyBrowserState();
@@ -615,7 +416,7 @@ function topicQuestions(id) {
 }
 
 function navigate(view) {
-  if (!VIEW_TITLES[view]) return;
+  if (!isKnownView(view)) return;
   if (view !== "exam") clearInterval(examTimer);
   state.currentView = view;
   viewTitle.textContent = viewLabel(view);
