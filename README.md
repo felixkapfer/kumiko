@@ -117,6 +117,21 @@ Beim Wiederherstellen fragt es nach dem Ordner des neuen Klons. Vorhandene
 Ein Standard-Archiv heißt zum Beispiel
 `2026-09-17 - 23-21 - backup-kumiko-data.tar.gz`.
 
+## Projektordner verschieben
+
+Wenn der gesamte Projektordner verschoben wird, bleiben Git-Historie, lokale
+`data/`-Daten und die virtuelle Umgebung erhalten. Vor dem Verschieben sollte
+ein Backup erstellt und die App beendet werden. Anschließend den ganzen
+Projektordner (nicht nur dessen sichtbare Dateien) mit `mv` verschieben:
+
+```bash
+mv /alter/pfad/kumiko /neuer/pfad/kumiko
+```
+
+Der Zielordner `kumiko` darf dabei noch nicht existieren. Falls er nur als
+leerer, zuvor angelegter Ordner existiert, kann er mit `rmdir` entfernt werden;
+`rmdir` funktioniert ausschließlich bei leeren Ordnern.
+
 ## Konfiguration
 
 Siehe [.env.example](.env.example):
