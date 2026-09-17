@@ -98,6 +98,22 @@ Gespeichert werden:
 Bestehende Daten aus `data/adbs_exam_prep.sqlite3` werden einmalig in den
 ADBS-Kurskontext migriert, wenn die neue Datenbank noch leer ist.
 
+## Lokale Daten sichern und wiederherstellen
+
+Die Datenbanken unter `data/` sind absichtlich nicht in Git. Das interaktive
+Skript erstellt dafür datierte Archive und schlägt `~/kumiko-backups` als
+Sicherungsort vor:
+
+```bash
+./scripts/kumiko-data.sh backup
+./scripts/kumiko-data.sh restore
+```
+
+Beim Wiederherstellen fragt es nach dem Ordner des neuen Klons. Vorhandene
+`data/`-Daten werden nicht gelöscht, sondern in einen datierten
+`data.before-restore-*`-Ordner verschoben. Docker-Daten im Volume
+`kumiko-data` werden von diesem Skript nicht verändert.
+
 ## Konfiguration
 
 Siehe [.env.example](.env.example):
