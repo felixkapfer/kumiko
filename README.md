@@ -101,7 +101,7 @@ ADBS-Kurskontext migriert, wenn die neue Datenbank noch leer ist.
 ## Lokale Daten sichern und wiederherstellen
 
 Die Datenbanken unter `data/` sind absichtlich nicht in Git. Das interaktive
-Skript erstellt dafür datierte Archive und schlägt `~/kumiko-backups` als
+Skript erstellt dafür datierte Archive und schlägt `~/backups/kumiko` als
 Sicherungsort vor:
 
 ```bash
@@ -113,6 +113,9 @@ Beim Wiederherstellen fragt es nach dem Ordner des neuen Klons. Vorhandene
 `data/`-Daten werden nicht gelöscht, sondern in einen datierten
 `data.before-restore-*`-Ordner verschoben. Docker-Daten im Volume
 `kumiko-data` werden von diesem Skript nicht verändert.
+
+Ein Standard-Archiv heißt zum Beispiel
+`2026-09-17 - 23-21 - backup-kumiko-data.tar.gz`.
 
 ## Konfiguration
 

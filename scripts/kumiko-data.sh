@@ -5,7 +5,7 @@
 set -euo pipefail
 umask 077
 
-DEFAULT_BACKUP_DIR="$HOME/kumiko-backups"
+DEFAULT_BACKUP_DIR="$HOME/backups/kumiko"
 
 die() {
   printf 'Fehler: %s\n' "$*" >&2
@@ -48,7 +48,7 @@ backup() {
 
   backup_dir="$(ask_path 'Ordner für Sicherungen' "$DEFAULT_BACKUP_DIR")"
   mkdir -p "$backup_dir"
-  archive_name="kumiko-data-$(date +%Y%m%d-%H%M%S).tar.gz"
+  archive_name="$(date '+%Y-%m-%d - %H-%M') - backup-kumiko-data.tar.gz"
   archive_path="$backup_dir/$archive_name"
   temporary_archive="$(mktemp "$backup_dir/.kumiko-data.XXXXXX")"
   trap 'rm -f "$temporary_archive"' EXIT
@@ -62,8 +62,8 @@ backup() {
 
 restore() {
   local default_archive archive_path app_dir previous_data
-  default_archive="$(find "$DEFAULT_BACKUP_DIR" -maxdepth 1 -type f -name 'kumiko-data-*.tar.gz' -print 2>/dev/null | sort | tail -n 1 || true)"
-  [[ -n "$default_archive" ]] || default_archive="$DEFAULT_BACKUP_DIR/kumiko-data-YYYYMMDD-HHMMSS.tar.gz"
+  default_archive="$(find "$DEFAULT_BACKUP_DIR" -maxdepth 1 -type f -name '* - backup-kumiko-data.tar.gz' -print 2>/dev/null | sort | tail -n 1 || true)"
+  [[ -n "$default_archive" ]] || default_archive="$DEFAULT_BACKUP_DIR/YYYY-MM-DD - HH-MM - backup-kumiko-data.tar.gz"
   archive_path="$(ask_path 'Pfad zur Sicherungsdatei' "$default_archive")"
   [[ -f "$archive_path" ]] || die "Sicherungsdatei existiert nicht: $archive_path"
   tar -tzf "$archive_path" | grep -Eq '^data(/|$)' || die 'Archiv enthält keinen data/-Ordner.'
